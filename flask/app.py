@@ -239,6 +239,35 @@ def unique_album_slug(cur, user_id: int, base: str) -> str:
         slug = f"{base}-{n}"
         n += 1
 
+# ----------------------------
+# Helpers (URL normalization)
+# ----------------------------
+from urllib.parse import urlparse
+
+def normalize_media_url(url_str: str | None) -> str | None:
+    """
+    Convert same-origin absolute URLs (incl. localhost/127.x/192.168.x.x) to a relative path
+    so the DB never stores host/IP-bound links. Leaves external hosts untouched.
+    Returns a clean relative like 'media/covers/abc.jpg' or None.
+    """
+    if not url_str:
+        return None
+    s = str(url_str).strip()
+    parsed = urlparse(s)
+
+    # Already relative (no scheme/netloc)
+    if not parsed.scheme and not parsed.netloc:
+        return s.lstrip("/")
+
+    # Same-origin or local dev → strip scheme/host/port
+    req_host = (request.host or "").split(":")[0]
+    is_local = parsed.hostname in {"localhost", "127.0.0.1"} or (parsed.hostname or "").startswith("192.168.")
+    same_origin = parsed.hostname == req_host
+    if same_origin or is_local:
+        return parsed.path.lstrip("/")
+
+    # External host → store as-is
+    return s
 
 
 
@@ -1282,20 +1311,14 @@ def add_header(response):
 
 
 
-
-
-
-
-
-
-
-
-
-
 # app.py — Auth API as a Blueprint kept in the same file (monolith-friendly)
-from flask import Blueprint, request, session, jsonify
+from flask import Blueprint, request, session, jsonify, url_for
 from werkzeug.security import check_password_hash
 from datetime import datetime
+from urllib.parse import urlparse
+from psycopg.types.json import Json
+import os
+from werkzeug.utils import secure_filename
 
 api_auth = Blueprint("api_auth", __name__)
 
@@ -1323,11 +1346,23 @@ def _row_to_user(cur, user_id):
         "avatar_url": avatar_url
     }
 
+def normalize_media_url(url_str: str | None) -> str | None:
+    """Store same-origin absolute URLs as path-only to avoid persisting local IP/host; keep external hosts intact."""
+    if not url_str:
+        return None
+    s = str(url_str).strip()
+    parsed = urlparse(s)
+    if not parsed.scheme and not parsed.netloc:
+        return "/" + s.lstrip("/")  # ensure single leading slash for stored paths
+    req_host = (request.host or "").split(":")[0]
+    host = (parsed.hostname or "").lower()
+    is_local = host in {"localhost", "127.0.0.1"} or host.startswith("192.168.")
+    same_origin = host == req_host.lower()
+    if same_origin or is_local:
+        return parsed.path or "/"  # path-only for DB
+    return s
 
 
-
-# app.py — REPLACE the entire login function with this version
-from psycopg.types.json import Json
 
 @api_auth.post("/login")
 def api_login():
@@ -1393,17 +1428,18 @@ def api_me():
         return jsonify({"user": user}), 200
 
 
-
+# app.py — api_me_albums (include subtitle/band and keep cover_url)
 @api_auth.get("/me/albums")
 def api_me_albums():
-    """Return the authenticated user's albums as [{id,title,cover_url,created_at}]; 401 when not logged in."""
+    """Return the authenticated user's albums as [{id,title,subtitle,cover_url,created_at}]; 401 when not logged in."""
     uid = session.get("user_id")
     if not uid:
         return jsonify({"albums": []}), 401
     with get_conn() as conn, conn.cursor() as cur:
         cur.execute(
             """
-            SELECT id::text, title, COALESCE(cover_path, '') AS cover_url, created_at
+            SELECT id::text, title, COALESCE(subtitle, '') AS subtitle,
+                   COALESCE(cover_path, '') AS cover_url, created_at
             FROM albums
             WHERE user_id = %s
             ORDER BY created_at DESC, id DESC
@@ -1415,37 +1451,40 @@ def api_me_albums():
             {
                 "id": r[0],
                 "title": r[1],
-                "cover_url": r[2],
-                "created_at": (r[3].isoformat() if r[3] else None),
+                "subtitle": r[2],
+                "cover_url": r[3],
+                "created_at": (r[4].isoformat() if r[4] else None),
             }
             for r in rows
         ]
         return jsonify({"albums": albums}), 200
 
 
+# app.py — api_me_albums_create (accept optional subtitle/band)
 @api_auth.post("/me/albums")
 def api_me_albums_create():
-    """Create a new album for the authenticated user; accepts {title, cover_url?}; returns created album."""
+    """Create a new album {title, subtitle?}; returns created album with cover_url."""
     uid = session.get("user_id")
     if not uid:
         return jsonify({"error": "unauthorized"}), 401
 
     payload = request.get_json(silent=True) or request.form or {}
     title = (payload.get("title") or "").strip()
+    subtitle = (payload.get("subtitle") or payload.get("band") or "").strip() or None
     cover_url = (payload.get("cover_url") or "").strip() or None
     if not title:
-        return jsonify({"error": "title_required"}), 400
+      return jsonify({"error":"title_required"}), 400
 
     with get_conn() as conn, conn.cursor() as cur:
         base = make_slug(title)
         slug = unique_album_slug(cur, uid, base)
         cur.execute(
             """
-            INSERT INTO albums (id, user_id, slug, title, cover_path, visibility, metadata)
-            VALUES (uuid_generate_v4(), %s, %s, %s, %s, 'private', '{}'::jsonb)
-            RETURNING id::text, title, COALESCE(cover_path, '') AS cover_url, created_at
+            INSERT INTO albums (id, user_id, slug, title, subtitle, cover_path, visibility, metadata)
+            VALUES (uuid_generate_v4(), %s, %s, %s, %s, %s, 'private', '{}'::jsonb)
+            RETURNING id::text, title, COALESCE(subtitle,''), COALESCE(cover_path,''), created_at
             """,
-            (uid, slug, title, cover_url),
+            (uid, slug, title, subtitle, cover_url),
         )
         row = cur.fetchone()
         conn.commit()
@@ -1453,15 +1492,60 @@ def api_me_albums_create():
     album = {
         "id": row[0],
         "title": row[1],
-        "cover_url": row[2],
-        "created_at": (row[3].isoformat() if row[3] else None),
+        "subtitle": row[2],
+        "cover_url": row[3],
+        "created_at": (row[4].isoformat() if row[4] else None),
     }
     return jsonify({"album": album}), 201
 
 
+# app.py — api_album_update (support subtitle/band updates)
+@api_auth.post("/me/albums/<string:album_id>")
+def api_album_update(album_id):
+    """Update title, subtitle (band), description_md, visibility, cover_path, metadata."""
+    uid = session.get("user_id")
+    if not uid:
+        return jsonify({"error": "unauthorized"}), 401
 
-# app.py — album editor endpoints (fetch/update one album; JSON in/out)
-from psycopg.types.json import Json
+    payload = request.get_json(silent=True) or request.form or {}
+    title = (payload.get("title") or "").strip()
+    subtitle = (payload.get("subtitle") or payload.get("band") or "").strip()
+    description_md = (payload.get("description_md") or "").strip()
+    visibility = (payload.get("visibility") or "private").strip()
+    cover_url = (payload.get("cover_url") or "").strip()
+    metadata = payload.get("metadata") or {}
+
+    with get_conn() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
+            UPDATE albums
+            SET title = COALESCE(NULLIF(%s,''), title),
+                subtitle = COALESCE(NULLIF(%s,''), subtitle),
+                description_md = %s,
+                visibility = %s::visibility_enum,
+                cover_path = %s,
+                metadata = %s,
+                updated_at = now()
+            WHERE id = %s AND user_id = %s
+            RETURNING id::text, title, COALESCE(subtitle,''), COALESCE(cover_path,''), visibility::text, metadata, updated_at
+            """,
+            (title, subtitle, description_md, visibility, cover_url or None, Json(metadata), album_id, uid),
+        )
+        row = cur.fetchone()
+        if not row:
+            return jsonify({"error": "not_found"}), 404
+        conn.commit()
+        out = {
+            "id": row[0],
+            "title": row[1],
+            "subtitle": row[2],
+            "cover_url": row[3],
+            "visibility": row[4],
+            "metadata": row[5] or {},
+            "updated_at": (row[6].isoformat() if row[6] else None),
+        }
+        return jsonify({"album": out}), 200
+
 
 
 
@@ -1514,58 +1598,10 @@ def api_album_get(album_id):
         }
         return jsonify({"album": album}), 200
 
-@api_auth.post("/me/albums/<string:album_id>")
-def api_album_update(album_id):
-    """Update title, description_md, visibility, cover_path, and metadata (incl. tracks array)."""
-    uid = session.get("user_id")
-    if not uid:
-        return jsonify({"error": "unauthorized"}), 401
-
-    payload = request.get_json(silent=True) or request.form or {}
-    title = (payload.get("title") or "").strip()
-    description_md = (payload.get("description_md") or "").strip()
-    visibility = (payload.get("visibility") or "private").strip()
-    cover_url = (payload.get("cover_url") or "").strip()
-    metadata = payload.get("metadata") or {}
-
-    with get_conn() as conn, conn.cursor() as cur:
-        cur.execute(
-            """
-            UPDATE albums
-            SET title = COALESCE(NULLIF(%s,''), title),
-                description_md = %s,
-                visibility = %s::visibility_enum,
-                cover_path = %s,
-                metadata = %s,
-                updated_at = now()
-            WHERE id = %s AND user_id = %s
-            RETURNING id::text, title, COALESCE(cover_path,''), visibility::text, metadata, updated_at
-            """,
-            (title, description_md, visibility, cover_url or None, Json(metadata), album_id, uid),
-        )
-        row = cur.fetchone()
-        if not row:
-            return jsonify({"error": "not_found"}), 404
-        conn.commit()
-        out = {
-            "id": row[0],
-            "title": row[1],
-            "cover_url": row[2],
-            "visibility": row[3],
-            "metadata": row[4] or {},
-            "updated_at": (row[5].isoformat() if row[5] else None),
-        }
-        return jsonify({"album": out}), 200
-
-
-# app.py — album cover upload + serve URL update
-import os
-from werkzeug.utils import secure_filename
-
 
 @api_auth.post("/me/albums/<string:album_id>/cover")
 def api_album_upload_cover(album_id):
-    """Accept multipart 'file' image, save under /static/album_covers, update albums.cover_path, return {'cover_url': url}."""
+    """Accept multipart 'file' image, save under /static/album_covers, update albums.cover_path, return {'cover_url': path}."""
     uid = session.get("user_id")
     if not uid:
         return jsonify({"error": "unauthorized"}), 401
@@ -1587,15 +1623,11 @@ def api_album_upload_cover(album_id):
         path_fs = os.path.join(root, fname)
         file.save(path_fs)
 
-        url_rel = f"/static/album_covers/{fname}"
+        url_rel = f"/static/album_covers/{fname}"  # stored as path-only
         cur.execute("UPDATE albums SET cover_path=%s, updated_at=now() WHERE id=%s AND user_id=%s", (url_rel, album_id, uid))
         conn.commit()
 
     return jsonify({"cover_url": url_rel}), 200
-
-
-
-
 
 
 

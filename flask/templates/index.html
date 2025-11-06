@@ -81,7 +81,7 @@ data-tree="{{ url_for('media', filename='archives/audioteka.txt') }}">
     <div class="help-head">
       <h2 id="shortcutsTitle">Shortcuts</h2>
       <button id="helpClose" type="button" aria-label="Close" title="Close">
-        <img src="media/icons/x-close.svg" alt="" width="20" height="20">
+        <img src="static/icons/x-close.svg" alt="" width="20" height="20">
       </button>
     </div>
 
@@ -98,13 +98,13 @@ data-tree="{{ url_for('media', filename='archives/audioteka.txt') }}">
 </div>
 
 <button id="themeToggle" type="button" aria-label="Toggle theme" title="Toggle theme">
-  <img src="media/icons/moon.svg" alt="" width="18" height="18">
+  <img src="static/icons/moon.svg" alt="" width="18" height="18">
 </button>
 
 
 <!-- Login UI — insert between the closing </div> of #shortcutsModal and the existing <button id="themeToggle"...> -->
   <button id="loginBtn" type="button" aria-label="Login" title="Login">
-    <img src="media/icons/user.svg" alt="" width="18" height="18">
+    <img src="static/icons/user.svg" alt="" width="18" height="18">
   </button>
 
   <div id="loginModal" class="help-modal hidden" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
@@ -113,7 +113,7 @@ data-tree="{{ url_for('media', filename='archives/audioteka.txt') }}">
       <div class="help-head">
         <h2 id="loginTitle">Login</h2>
         <button id="loginClose" type="button" aria-label="Close" title="Close">
-          <img src="media/icons/x-close.svg" alt="" width="20" height="20">
+          <img src="static/icons/x-close.svg" alt="" width="20" height="20">
         </button>
 
       </div>
@@ -144,13 +144,13 @@ data-tree="{{ url_for('media', filename='archives/audioteka.txt') }}">
     <div class="help-head">
       <h2 id="accountTitle">Account</h2>
       <button id="accountClose" type="button" aria-label="Close" title="Close">
-        <img src="media/icons/x-close.svg" alt="" width="20" height="20">
+        <img src="static/icons/x-close.svg" alt="" width="20" height="20">
       </button>
     </div>
 
 
     <div class="acct-head">
-      <img id="acctAvatar" class="acct-avatar" src="media/icons/user.svg" alt="">
+      <img id="acctAvatar" class="acct-avatar" src="static/icons/user.svg" alt="">
       <div class="acct-meta">
         <div id="acctName" class="acct-name">Guest</div>
         <div id="acctEmail" class="acct-email"></div>
@@ -194,7 +194,7 @@ data-tree="{{ url_for('media', filename='archives/audioteka.txt') }}">
     <div class="help-head">
       <h2 id="albumEditorTitle">Edit album</h2>
       <button id="albumEditorClose" type="button" aria-label="Close" title="Close">
-        <img src="media/icons/x-close.svg" alt="" width="20" height="20">
+        <img src="static/icons/x-close.svg" alt="" width="20" height="20">
       </button>
     </div>
 
@@ -202,19 +202,16 @@ data-tree="{{ url_for('media', filename='archives/audioteka.txt') }}">
       <input type="hidden" id="aeId" value="">
       <div class="ae-row">
         <div class="ae-left">
-          <div class="ae-cover">
-            <img id="aeCoverImg" alt="">
+          <div class="ae-cover" style="position:relative;aspect-ratio:1/1;border-radius:8px;overflow:hidden;background:#000;">
+            <img id="aeCoverImg" alt="" src="" style="width:100%;height:100%;object-fit:cover;display:block;">
           </div>
 
-          <!-- Album Editor: cover controls (validation-free input + upload) -->
           <div class="ae-cover-ctrls">
             <input id="aeCoverUrl" type="text" placeholder="Cover URL (optional)">
             <label class="btn" for="aeCoverFile">Upload…</label>
             <input id="aeCoverFile" type="file" accept="image/*">
           </div>
 
-
-          
           <div class="ae-vis">
             <label for="aeVisibility">Visibility</label>
             <select id="aeVisibility">
@@ -230,6 +227,12 @@ data-tree="{{ url_for('media', filename='archives/audioteka.txt') }}">
             <label for="aeTitle">Title</label>
             <input id="aeTitle" type="text" required>
           </div>
+
+          <div class="ae-field">
+            <label for="aeBand">Band / Artist</label>
+            <input id="aeBand" type="text" placeholder="Band or artist name">
+          </div>
+
           <div class="ae-field">
             <div class="ae-field-head">
               <label for="aeDesc">Information</label>
