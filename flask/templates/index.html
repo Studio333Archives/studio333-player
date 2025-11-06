@@ -422,4 +422,18 @@ data-tree="{{ url_for('media', filename='archives/audioteka.txt') }}">
 </script>
 
 
+
+<script>
+/* Purpose: Normalize initial scale on iOS on first paint (prevents Safari restoring a zoomed state). */
+  (function(){
+    var ua = navigator.userAgent;
+    var isIOS = /iP(hone|ad|od)/.test(ua) || (ua.includes('Mac') && 'ontouchend' in document);
+    if (!isIOS) return;
+    var m = document.querySelector('meta[name=viewport]');
+    if (m) m.setAttribute('content','width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover');
+  })();
+</script>
+
+
+
 {% endblock %}

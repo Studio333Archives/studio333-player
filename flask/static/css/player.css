@@ -32,6 +32,9 @@
       font-weight:400; font-style:normal; font-display:swap;
     }
 
+
+
+
 /* Theme: Light (default) */
 :root{
   /* control sizing */
@@ -49,7 +52,7 @@
   --fg-muted: #444444;
 
   --ui-bg: rgba(0,0,0,0.06);
-  --ui-border: rgba(0,0,0,0.14);
+  --ui-border: yellow;
 
   --ctl-bg: rgba(0,0,0,0.06);
   --ctl-bg-hover: rgba(0,0,0,0.12);
@@ -164,7 +167,7 @@ html, body{
   background: var(--clr-ui-bg);
   border:1px solid var(--clr-ui-border);
   border-radius:10px;
-  padding:8px 10px;
+  padding: 8px 10px;
   backdrop-filter: blur(6px);
   align-items:center;
   max-width: 75%;
@@ -397,6 +400,12 @@ select{
 
 .hidden{ display:none !important; }
 
+
+
+
+
+
+
 /* Mobile UI Toggle Button */
 #uiToggleBtn{
   position: fixed;
@@ -411,6 +420,7 @@ select{
   box-shadow: 0 8px 24px rgba(0,0,0,0.35);
   z-index: 9999; cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  border: 1px solid #8bc34a61;
 }
 #uiToggleBtn svg circle{ fill: none; stroke: currentColor; opacity: .35; }
 #uiToggleBtn svg path{ stroke: currentColor; }
@@ -447,7 +457,7 @@ select{
   border-radius: 14px;
   box-shadow: 0 20px 60px rgba(0,0,0,.55);
   color: var(--fg);
-  padding: 14px 14px 10px 14px;
+  padding: 16px 16px 16px 16px;
   font-family: CALC, system-ui, -apple-system, Segoe UI, Avenir, sans-serif;
 }
 .help-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom: 6px; }
@@ -483,324 +493,285 @@ select{
 }
 
 
-/* Theme Toggle Button */
+/* UI toggles: mobile-only round button + stack order */
+#uiToggleBtn{
+  position: fixed;
+  right: calc(12px + env(safe-area-inset-right));
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  width: 56px; height: 56px;
+  border: 0; border-radius: 50%;
+  background: color-mix(in srgb, var(--bg) 25%, transparent);
+  backdrop-filter: blur(6px);
+  color: var(--fg);
+  display: grid; place-items: center;
+  box-shadow: 0 8px 24px rgba(0,0,0,.35);
+  z-index: 9999; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+#uiToggleBtn svg circle{ fill: none; stroke: currentColor; opacity: .35; }
+#uiToggleBtn svg path{ stroke: currentColor; }
+#uiToggleBtn:active{ transform: translateY(1px) scale(.98); }
+@media (hover:hover) and (pointer:fine){ #uiToggleBtn{ display:none; } }
+
+/* Shortcuts button */
+#helpBtn{
+  position: fixed;
+  right: calc(12px + env(safe-area-inset-right));
+  bottom: calc(92px + env(safe-area-inset-bottom));
+  width: 44px; height: 44px;
+  border: 1px solid var(--clr-ui-border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--bg) 25%, transparent);
+  color: var(--fg); font-weight: 800; font-size: 20px; line-height: 1;
+  display: grid; place-items: center; z-index: 9999; cursor: pointer;
+  backdrop-filter: blur(6px);
+}
+#helpBtn:active{ transform: translateY(1px) scale(.98); }
+@media (hover:hover) and (pointer:fine){ #helpBtn{ opacity:.9; } #helpBtn:hover{ opacity:1; } }
+
+/* Theme toggle */
 #themeToggle{
   position: fixed;
   right: calc(12px + env(safe-area-inset-right));
-  bottom: calc(140px + env(safe-area-inset-bottom)); /* stacks above ? and UI buttons */
-  width: 44px;
-  height: 44px;
+  bottom: calc(140px + env(safe-area-inset-bottom));
+  width: 44px; height: 44px;
   border: 1px solid var(--clr-ui-border);
   border-radius: 10px;
   background: color-mix(in srgb, var(--bg) 25%, transparent);
   color: var(--fg);
-  display: grid;
-  place-items: center;
-  z-index: 9999;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
+  display:grid; place-items:center;
+  z-index: 9999; cursor:pointer; -webkit-tap-highlight-color:transparent;
   backdrop-filter: blur(6px);
 }
 #themeToggle:active{ transform: translateY(1px) scale(.98); }
 @media (hover:hover) and (pointer:fine){ #themeToggle{ opacity:.9; } #themeToggle:hover{ opacity:1; } }
+#themeToggle img{ display:block; width:18px; height:18px; filter: var(--icon-filter); }
 
-/* Theme Toggle Icon: external SVG follows theme (black source SVG becomes white in dark via filter var) */
-#themeToggle img{
-  display:block;
-  width: 18px;
-  height: 18px;
-  filter: var(--icon-filter);
-}
-
-/* Optional: keep the stack tidy if you also show #helpBtn and #uiToggleBtn */
-#helpBtn{
-  bottom: calc(92px + env(safe-area-inset-bottom));
-}
-#uiToggleBtn{
-  bottom: calc(12px + env(safe-area-inset-bottom));
-}
-
-
-
-/* static/css/player.css — Login UI + Button (theme-aware; replaces previous login block) */
-#loginModal .help-panel {
-  max-width: 360px;
-}
-
-#loginModal .form-row {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin: 10px 0;
-}
-
-#loginModal label {
-  font-size: 0.9rem;
-  opacity: 0.9;
-  color: var(--fg);
-}
-
-#loginModal input {
-  height: 34px;
-  padding: 6px 8px;
-  border: 1px solid var(--clr-ui-border);
-  background: var(--panel-bg);
-  color: var(--fg);
-  border-radius: 6px;
-}
-
-#loginModal input::placeholder {
-  color: color-mix(in srgb, var(--fg) 55%, transparent);
-}
-
-#loginModal input:focus {
-  outline: 0;
-  border-color: var(--accent, #ff0245);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent, #ff0245) 30%, transparent);
-}
-
-#loginModal .form-actions {
-  margin-top: 14px;
-}
-
-#loginModal .form-actions button {
-  height: 34px;
-}
-
-#loginBtn {
+/* Login button */
+#loginBtn{
   position: fixed;
   right: calc(12px + env(safe-area-inset-right));
   bottom: calc(188px + env(safe-area-inset-bottom));
-  width: 44px;
-  height: 44px;
+  width: 44px; height: 44px;
   border: 1px solid var(--clr-ui-border);
   border-radius: 10px;
   background: color-mix(in srgb, var(--bg) 25%, transparent);
   color: var(--fg);
-  display: grid;
-  place-items: center;
-  z-index: 9999;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
+  display:grid; place-items:center;
+  z-index: 9999; cursor:pointer; -webkit-tap-highlight-color:transparent;
   backdrop-filter: blur(6px);
 }
+#loginBtn:active{ transform: translateY(1px) scale(.98); }
+@media (hover:hover) and (pointer:fine){ #loginBtn{ opacity:.9; } #loginBtn:hover{ opacity:1; } }
+#loginBtn img{ display:block; width:18px; height:18px; filter: var(--icon-filter); pointer-events:none; }
 
-#loginBtn:active {
-  transform: translateY(1px) scale(.98);
+/* Overlays */
+.help-modal{ position:fixed; inset:0; z-index:10000; display:grid; place-items:center; background:var(--overlay); backdrop-filter:blur(4px); }
+.help-panel{
+  width:min(620px, calc(100vw - 2rem));
+  max-height:80vh; overflow:auto;
+  background:var(--panel-bg);
+  border:1px solid var(--panel-border);
+  border-radius:14px; box-shadow:0 20px 60px rgba(0,0,0,.55);
+  color:var(--fg);
+  padding: 16px;
+  font-family: CALC, system-ui, -apple-system, Segoe UI, Avenir, sans-serif;
 }
+.help-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+.help-head h2{ margin:0; font-size:1.1rem; letter-spacing:1px; }
 
-@media (hover:hover) and (pointer:fine) {
-  #loginBtn { opacity: .9; }
-  #loginBtn:hover { opacity: 1; }
-}
-
-#loginBtn img {
-  display: block;
-  width: 18px;
-  height: 18px;
-  filter: var(--icon-filter);
-  pointer-events: none;
-}
-
-#loginBtn:focus-visible {
-  outline: 2px solid var(--fg);
-  outline-offset: 3px;
-}
-
-@media (pointer: coarse) {
-  #loginModal input { height: 40px; }
-  #loginModal .form-actions button { height: 40px; }
-}
-
-
-/* static/css/player.css — Close buttons (help/login/account) */
-#helpClose,
-#loginClose,
-#accountClose {
-  box-sizing: border-box;
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  padding: 0;
-  line-height: 0;
-  border: 1px solid var(--clr-ui-border);
-  border-radius: 10px;
+/* Close buttons (help/login/account) */
+#helpClose,#loginClose,#accountClose{
+  box-sizing:border-box; display:grid; place-items:center;
+  width:36px; height:36px; padding:0; line-height:0;
+  border:1px solid var(--clr-ui-border); border-radius:10px;
   background: color-mix(in srgb, var(--bg) 8%, transparent);
-  color: var(--fg);
-  cursor: pointer;
-  backdrop-filter: blur(6px);
+  color:var(--fg); cursor:pointer; backdrop-filter:blur(6px);
+}
+#helpClose:hover,#loginClose:hover,#accountClose:hover{ background: color-mix(in srgb, var(--bg) 16%, transparent); }
+#helpClose img,#loginClose img,#accountClose img{ display:block; width:20px; height:20px; filter:var(--icon-filter); pointer-events:none; }
+
+/* Shortcuts list */
+.help-list{ list-style:none; margin:8px 2px 6px; padding:0; display:grid; gap:8px; font-size:clamp(13px,2.9vw,15px); }
+.help-list li{ display:flex; align-items:center; gap:10px; }
+.help-list kbd{
+  display:inline-block; min-width:26px; text-align:center; padding:4px 8px; border-radius:6px;
+  border:1px solid var(--kbd-border); background:var(--kbd-bg); color:var(--fg); font-weight:700; letter-spacing:.5px;
 }
 
-#helpClose:hover,
-#loginClose:hover,
-#accountClose:hover {
-  background: color-mix(in srgb, var(--bg) 16%, transparent);
+/* Login modal form */
+#loginModal .help-panel{ max-width:360px; }
+#loginModal .form-row{ display:flex; flex-direction:column; gap:6px; margin:10px 0; }
+#loginModal label{ font-size:.9rem; opacity:.9; color:var(--fg); }
+#loginModal input{
+  height:34px; padding:6px 8px; border:1px solid var(--clr-ui-border); background:var(--panel-bg); color:var(--fg); border-radius:6px;
 }
-
-#helpClose img,
-#loginClose img,
-#accountClose img {
-  display: block;
-  width: 20px;
-  height: 20px;
-  pointer-events: none;
-  filter: var(--icon-filter);
-}
-
-/* Login form error line */
+#loginModal input::placeholder{ color: color-mix(in srgb, var(--fg) 55%, transparent); }
+#loginModal input:focus{ outline:0; border-color: var(--accent,#ff0245); box-shadow:0 0 0 2px color-mix(in srgb, var(--accent,#ff0245) 30%, transparent); }
+#loginModal .form-actions{ margin-top:14px; }
+#loginModal .form-actions button{ height:34px; }
 .form-error{
-  margin: 4px 0 8px 0;
-  padding: 6px 8px;
-  border-radius: 6px;
-  border: 1px solid color-mix(in srgb, var(--fg) 22%, transparent);
+  margin:4px 0 8px; padding:6px 8px; border-radius:6px;
+  border:1px solid color-mix(in srgb, var(--fg) 22%, transparent);
   background: color-mix(in srgb, var(--bg) 16%, transparent);
-  color: var(--f-error);
-  font-weight: 700;
-  letter-spacing: .5px;
+  color: var(--f-error); font-weight:700; letter-spacing:.5px;
 }
+@media (pointer:coarse){ #loginModal input{ height:40px; } #loginModal .form-actions button{ height:40px; } }
 
-
-
-
-
-/* static/css/player.css — Account overlay */
-.acct-head{ display:flex; align-items:center; gap:12px; margin:8px 0 12px 0; }
+/* Account overlay */
+.acct-head{ display:flex; align-items:center; gap:12px; margin:8px 0 12px; }
 .acct-avatar{ width:48px; height:48px; border-radius:50%; object-fit:cover; border:1px solid var(--clr-ui-border); }
 .acct-meta{ display:flex; flex-direction:column; gap:2px; }
 .acct-name{ font-weight:700; }
 .acct-email{ opacity:.8; font-size:.9rem; }
-
-.acct-tabs{ display:flex; gap:6px; margin: 6px 0 10px 0; }
-.acct-tab{
-  appearance:none; border:1px solid var(--clr-ui-border);
-  background: color-mix(in srgb, var(--bg) 12%, transparent);
-  color: var(--fg); border-radius:8px; padding:6px 10px; cursor:pointer; font-weight:600;
-}
+.acct-tabs{ display:flex; gap:6px; margin:6px 0 10px; }
+.acct-tab{ appearance:none; border:1px solid var(--clr-ui-border); background: color-mix(in srgb, var(--bg) 12%, transparent); color:var(--fg); border-radius:8px; padding:6px 10px; cursor:pointer; font-weight:600; }
 .acct-tab.is-active{ background: color-mix(in srgb, var(--bg) 22%, transparent); }
-
 .acct-panels{ display:block; }
 .acct-panel{ display:none; }
 .acct-panel.is-active{ display:block; }
-
-.acct-kv{ display:grid; grid-template-columns: max-content 1fr; gap:8px 14px; margin:0; }
+.acct-kv{ display:flex; flex-direction: column; gap:16px; margin:0; }
 .acct-kv dt{ opacity:.8; }
 .acct-kv dd{ margin:0; }
-
 .acct-list{ list-style:none; margin:0; padding:0; display:grid; gap:8px; }
-.acct-item{
-  padding:8px 10px; border:1px solid var(--clr-ui-border); border-radius:8px;
-  background: color-mix(in srgb, var(--bg) 10%, transparent);
+.acct-item{ padding:8px 10px; border:1px solid var(--clr-ui-border); border-radius:8px; background: color-mix(in srgb, var(--bg) 10%, transparent); }
+
+/* Albums grid: square covers + title overlay + responsive columns */
+.albums-grid{
+  display:grid; gap:16px;
+  grid-template-columns:repeat(3,1fr);
 }
+@media (min-width:920px){ .albums-grid{ grid-template-columns:repeat(4,1fr); } }
+@media (min-width:1280px){ .albums-grid{ grid-template-columns:repeat(5,1fr); } }
 
-
-/* Albums grid */
-.albums-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:10px;padding:4px}
-.album-card{display:grid;grid-template-rows:1fr auto;border:1px solid var(--clr-ui-border);border-radius:10px;background:color-mix(in srgb,var(--bg) 8%,transparent);overflow:hidden;min-height:150px}
-.album-card .album-cover{display:grid;place-items:center;background:color-mix(in srgb,var(--bg) 12%,transparent);aspect-ratio:1/1}
-.album-card .album-cover img{width:100%;height:100%;object-fit:cover;display:block}
-.album-card .album-title{padding:8px;font-weight:700;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.album-card.create{cursor:pointer;background:color-mix(in srgb,var(--bg) 4%,transparent)}
-.album-card.create .album-cover{background:transparent;border:2px dashed var(--clr-ui-border)}
-.album-card.create .plus{font-size:42px;line-height:1;color:var(--fg);transform:translateY(-2px)}
-.album-card:not(.create):not(.ghost){cursor:pointer}
-.album-card:not(.create):not(.ghost):hover{background:color-mix(in srgb,var(--bg) 14%,transparent)}
-.album-card.ghost{pointer-events:none;background:transparent}
-.album-card.ghost .album-cover{border:1px dashed color-mix(in srgb,var(--fg) 20%,transparent);background:transparent}
-.album-card.ghost .album-title{visibility:hidden}
-
-
-
-
-
-/* Album editor: layout, picker, tracks */
-.album-editor{width:min(960px,calc(100vw - 2rem));max-height:82vh;overflow:auto}
-.ae-row{display:grid;grid-template-columns:260px 1fr;gap:14px}
-@media (max-width:840px){.ae-row{grid-template-columns:1fr}}
-.ae-left{display:grid;gap:10px;align-content:start}
-.ae-cover{width:100%;aspect-ratio:1/1;border:1px solid var(--panel-border);border-radius:12px;overflow:hidden;background:color-mix(in srgb,var(--bg) 10%,transparent);display:grid;place-items:center}
-.ae-cover img{width:100%;height:100%;object-fit:cover;display:block}
-.ae-cover-ctrls{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center}
-#aeCoverUrl{height:34px;padding:6px 8px;border:1px solid var(--widget-color);background:var(--panel-bg);color:var(--text-color);border-radius:6px}
-#aeCoverFile{display:none}
-.ae-vis{display:grid;gap:6px}
-.ae-right{display:grid;gap:12px}
-.ae-field{display:grid;gap:6px}
-.ae-field label{font-weight:700}
-.ae-field input[type="text"],.ae-field textarea{border:1px solid var(--widget-color);background:var(--panel-bg);color:var(--text-color);border-radius:6px;padding:8px}
-.ae-field-head{display:flex;align-items:center;justify-content:space-between}
-.ae-actions{display:flex;gap:8px}
-#aeTracks{display:grid;gap:6px;border:1px dashed var(--clr-ui-border);border-radius:10px;padding:8px;min-height:56px;background:color-mix(in srgb,var(--bg) 6%,transparent)}
-
-.ae-track{display:grid;grid-template-columns:24px 1fr auto;gap:10px;align-items:center;border:1px solid var(--clr-ui-border);border-radius:8px;background:color-mix(in srgb,var(--bg) 10%,transparent);padding:8px}
-.ae-track .grip{cursor:grab;user-select:none}
-.ae-track .title{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ae-track .rm{appearance:none;border:1px solid var(--clr-ui-border);background:transparent;color:var(--fg);border-radius:8px;padding:6px 10px;cursor:pointer}
-
-.ae-picker{backdrop-filter: blur(4px); position:fixed;inset:0;background:var(--overlay);display:grid;place-items:center;z-index:10001}
-.ae-picker .ae-picker-head{display:flex;align-items:center;justify-content:space-between;background:var(--panel-bg);border:1px solid var(--panel-border);border-radius:12px;padding:8px 10px;width:min(920px,calc(100vw - 2rem))}
-.ae-picker .ae-picker-actions{display:flex;gap:8px;align-items:center}
-#aeSearch{height:34px;padding:6px 10px;border:1px solid var(--clr-ui-border);border-radius:999px;background:var(--panel-bg);color:var(--fg)}
-
-.ae-results{list-style:none;margin:8px auto 0;padding:0;max-height:58vh;overflow:auto;width:min(920px,calc(100vw - 2rem));display:grid;gap:8px}
-.ae-results li{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;border:1px solid var(--clr-ui-border);border-radius:10px;background:color-mix(in srgb,var(--bg) 8%,transparent);padding:10px 12px;cursor:pointer}
-.ae-results .title{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ae-results .add{appearance:none;border:1px solid var(--clr-ui-border);background:transparent;color:var(--fg);border-radius:8px;padding:6px 10px;cursor:pointer}
-.ae-results li:hover{background:color-mix(in srgb,var(--bg) 14%,transparent)}
-
-.hidden{display:none !important}
-
-
-
-/* Album editor: search input sizing + result/controls states */
-#aeSearch{
-  width:100%;
-  box-sizing:border-box;
-  border:1px solid var(--clr-ui-border);
-  background: color-mix(in srgb, var(--bg) 10%, transparent);
-  color: var(--fg);
-  border-radius:999px;
-  padding:14px 18px;
-  font-weight:600;
-  font-size:1.05rem;
-  outline:none;
-  box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--fg) 6%, transparent), 0 8px 26px rgba(0,0,0,.45);
-  font-family: LED, system-ui, -apple-system, Segoe UI, Avenir, sans-serif;
-}
-#aeSearch::placeholder{
-  color: color-mix(in srgb, var(--fg) 70%, transparent);
-  font-family: LED, system-ui, -apple-system, Segoe UI, Avenir, sans-serif;
-}
-.ae-results .add[disabled],
-.ae-results .play[disabled]{
-  opacity:.45;
-  pointer-events:none;
-  filter: grayscale(0.3);
-}
-.ae-results .play{
-  appearance:none;
-  border:1px solid var(--clr-ui-border);
-  background:transparent;
-  color:var(--fg);
-  border-radius:8px;
-  padding:6px 10px;
+.albums-grid .album-card{
+  position:relative; border-radius:12px; overflow:hidden;
+  background:#0c0c0c; box-shadow:0 0 0 1px rgba(255,255,255,.06) inset;
   cursor:pointer;
 }
-
-/* Album editor: playing-row highlight */
-.ae-results li.is-playing{
-  border-color: color-mix(in srgb, var(--fg) 35%, transparent);
-  background: color-mix(in srgb, var(--bg) 20%, transparent);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--fg) 18%, transparent) inset;
+.albums-grid .album-card .album-cover{ width:100%; aspect-ratio:1/1; overflow:hidden; background:#111; }
+.albums-grid .album-card .album-cover img{ display:block; width:100%; height:100%; object-fit:cover; }
+.albums-grid .album-card .album-title{
+  position:absolute; left:0; right:0; bottom:0; padding:10px 12px;
+  background:linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,.65) 70%, rgba(0,0,0,.8) 100%);
+  color:#fff; font-family:NEBULA, system-ui, -apple-system, Segoe UI, Avenir, sans-serif;
+  font-size:14px; line-height:1.15; letter-spacing:.02em;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; pointer-events:none; z-index:1;
 }
-.ae-results li.is-playing .play{ opacity: .85; }
 
-/* Album editor: playing row highlight and large search input */
-.ae-results li.is-playing { outline: 2px solid color-mix(in srgb, var(--fg) 35%, transparent); }
-#aeSearch{ width: min(680px, 100%); font-weight:600; border-radius:999px; }
+/* Create and ghost tiles */
+.albums-grid .album-card.create{ background: color-mix(in srgb, var(--bg) 4%, transparent); }
+.albums-grid .album-card.create .album-cover{ display:flex; align-items:center; justify-content:center; background:#0f0f0f; border:2px dashed var(--clr-ui-border); }
+.albums-grid .album-card.create .plus{ font-size:28px; line-height:1; color:#eaeaea; opacity:.9; }
+.albums-grid .album-card.ghost{ pointer-events:none; background:transparent; }
+.albums-grid .album-card.ghost .album-cover{ background:#0e0e0e; border:1px dashed color-mix(in srgb, var(--fg) 20%, transparent); }
+.albums-grid .album-card.ghost .album-title{ display:none; }
+
+/* Album editor layout + square cover */
+.album-editor{ width:min(960px, calc(100vw - 2rem)); max-height:95vh; overflow:auto; }
+.ae-row{ display:grid; grid-template-columns:260px 1fr; gap:14px; }
+@media (max-width:840px){ .ae-row{ grid-template-columns:1fr; } }
+.ae-left{ display:grid; gap:10px; align-content:start; }
+.ae-cover{ width:100%; aspect-ratio:1/1; border:1px solid var(--panel-border); border-radius:12px; overflow:hidden; background: color-mix(in srgb, var(--bg) 10%, transparent); display:grid; place-items:center; }
+.ae-cover img{ width:100%; height:100%; object-fit:cover; display:block; }
+.ae-cover-ctrls{ display:grid; grid-template-columns:1fr auto auto; gap:8px; align-items:center; }
+#aeCoverUrl{ height:34px; padding:6px 8px; border:1px solid var(--widget-color); background:var(--panel-bg); color:var(--text-color); border-radius:6px; }
+#aeCoverFile{ display:none; }
+.ae-vis{ display:grid; gap:6px; }
+.ae-right{ display:grid; gap:12px; }
+.ae-field{ display:grid; gap:6px; }
+.ae-field label{ font-weight:700; }
+.ae-field input[type="text"], .ae-field textarea{ border:1px solid var(--widget-color); background:var(--panel-bg); color:var(--text-color); border-radius:6px; padding:8px; }
+.ae-field-head{ display:flex; align-items:center; justify-content:space-between; }
+.ae-actions{ display:flex; gap:8px; }
+#aeTracks{ display:grid; gap:6px; border:1px dashed var(--clr-ui-border); border-radius:10px; padding:8px; min-height:56px; background: color-mix(in srgb, var(--bg) 6%, transparent); }
+.ae-track{ display:grid; grid-template-columns:24px 1fr auto; gap:10px; align-items:center; border:1px solid var(--clr-ui-border); border-radius:8px; background: color-mix(in srgb, var(--bg) 10%, transparent); padding:8px; }
+.ae-track .grip{ cursor:grab; user-select:none; }
+.ae-track .title{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ae-track .rm{ appearance:none; border:1px solid var(--clr-ui-border); background:transparent; color:var(--fg); border-radius:8px; padding:6px 10px; cursor:pointer; }
+
+/* Picker */
+.ae-picker{ position:fixed; inset:0; z-index:10001; display:grid; place-items:center; background:var(--overlay); backdrop-filter:blur(4px); }
+.ae-picker .ae-picker-head{ display:flex; align-items:center; justify-content:space-between; background:var(--panel-bg); border:1px solid var(--panel-border); border-radius:12px; padding:8px 10px; width:min(920px, calc(100vw - 2rem)); }
+.ae-picker .ae-picker-actions{ display:flex; gap:8px; align-items:center; }
+#aeSearch{
+  width:min(680px,100%); height:34px; padding:14px 18px;
+  border:1px solid yellow; border-radius:999px;
+  background: color-mix(in srgb, var(--bg) 10%, transparent); color:var(--fg);
+  font-weight:600; font-size:1.05rem; outline:none;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--fg) 6%, transparent), 0 8px 26px rgba(0,0,0,.45);
+  font-family: LED, system-ui, -apple-system, Segoe UI, Avenir, sans-serif;
+}
+#aeSearch::placeholder{ color: color-mix(in srgb, var(--fg) 70%, transparent); font-family: LED, system-ui, -apple-system, Segoe UI, Avenir, sans-serif; }
+
+.ae-results{ list-style:none; margin:8px auto 0; padding:0; max-height:58vh; overflow:auto; width:min(920px, calc(100vw - 2rem)); display:grid; gap:8px; }
+.ae-results li{ display:grid; grid-template-columns:1fr auto; gap:12px; align-items:center; border:1px solid var(--clr-ui-border); border-radius:10px; background: color-mix(in srgb, var(--bg) 8%, transparent); padding:10px 12px; cursor:pointer; }
+.ae-results .title{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .ae-row-actions{ display:inline-grid; grid-auto-flow:column; gap:8px; }
+.ae-results .add, .ae-results .play{ appearance:none; border:1px solid var(--clr-ui-border); background:transparent; color:var(--fg); border-radius:8px; padding:6px 10px; cursor:pointer; }
+.ae-results .add[disabled], .ae-results .play[disabled]{ opacity:.45; pointer-events:none; filter:grayscale(.3); }
+.ae-results li.is-playing{ border-color: yellow; background: color-mix(in srgb, var(--bg) 20%, transparent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--fg) 18%, transparent) inset; }
+.ae-results li.is-playing .play{ opacity:.85; }
+
+.hidden{ display:none !important; }
+
+
+/* Close buttons (help/login/account/album editor) */
+#helpClose,#loginClose,#accountClose,#albumEditorClose{
+  box-sizing:border-box; display:grid; place-items:center;
+  width:36px; height:36px; padding:0; line-height:0;
+  border:1px solid var(--clr-ui-border); border-radius:10px;
+  background: color-mix(in srgb, var(--bg) 8%, transparent);
+  color:var(--fg); cursor:pointer; backdrop-filter:blur(6px);
+}
+#helpClose:hover,#loginClose:hover,#accountClose:hover,#albumEditorClose:hover{
+  background: color-mix(in srgb, var(--bg) 16%, transparent);
+}
+/* External SVG in <img> follows theme via filter */
+#helpClose img,#loginClose img,#accountClose img,#albumEditorClose img{
+  display:block; width:20px; height:20px; pointer-events:none;
+  filter: var(--icon-filter);
+}
 
 
 
+/* static/css/player.css — iOS input zoom prevention (keep computed font-size ≥16px) */
+@supports (-webkit-touch-callout: none) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+  /* scope to app overlays to avoid global typography shifts */
+  #loginModal input, #loginModal select, #loginModal textarea,
+  #accountModal input, #accountModal select, #accountModal textarea,
+  #albumEditor input, #albumEditor select, #albumEditor textarea,
+  #searchPanel input {
+    font-size: 16px !important;
+  }
+}
+
+/* Fallback for other touch devices */
+@media (pointer: coarse) {
+  input, select, textarea {
+    font-size: 16px;
+  }
+}
+
+
+/* iOS zoom prevention: keep text-size adjustments off and inputs ≥16px everywhere we use them */
+html { -webkit-text-size-adjust: 100%; touch-action: manipulation; }
+
+@supports (-webkit-touch-callout: none) {
+  #loginModal input, #loginModal select, #loginModal textarea,
+  #accountModal input, #accountModal select, #accountModal textarea,
+  #albumEditor input, #albumEditor select, #albumEditor textarea,
+  #searchPanel input {
+    font-size: 16px !important;
+  }
+}
+
+/* Ensure our common small controls don’t trigger zoom by accident */
+#searchInput, #aeSearch, #aeTitle, #aeBand, #aeDesc, #aeCoverUrl {
+  font-size: 16px;
+}
 
 
