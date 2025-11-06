@@ -655,7 +655,7 @@ select{
   position:absolute; left:0; right:0; bottom:0; padding:10px 12px;
   background:linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,.65) 70%, rgba(0,0,0,.8) 100%);
   color:#fff; font-family:NEBULA, system-ui, -apple-system, Segoe UI, Avenir, sans-serif;
-  font-size:14px; line-height:1.15; letter-spacing:.02em;
+  font-size:16px; line-height:1.15; letter-spacing:.02em;
   white-space:nowrap; overflow:hidden; text-overflow:ellipsis; pointer-events:none; z-index:1;
 }
 
@@ -669,7 +669,7 @@ select{
 
 /* Album editor layout + square cover */
 .album-editor{ width:min(960px, calc(100vw - 2rem)); max-height:95vh; overflow:auto; }
-.ae-row{ display:grid; grid-template-columns:260px 1fr; gap:14px; }
+.ae-row{ display:grid; grid-template-columns:280px 1fr; gap:16px; }
 @media (max-width:840px){ .ae-row{ grid-template-columns:1fr; } }
 .ae-left{ display:grid; gap:10px; align-content:start; }
 .ae-cover{ width:100%; aspect-ratio:1/1; border:1px solid var(--panel-border); border-radius:12px; overflow:hidden; background: color-mix(in srgb, var(--bg) 10%, transparent); display:grid; place-items:center; }
