@@ -6207,30 +6207,40 @@ document.addEventListener('keydown', (e)=>{
   editor.addEventListener('click', (e)=>{ if (e.target===editor) requestClose(); }, { passive:true });
   editor.addEventListener('keydown', (e)=>{ if (e.key==='Escape'){ e.stopPropagation(); requestClose(); } }, { passive:false });
 
+ 
+
+
   // Tracks render
-  function renderTracks(list){
-    tracksBox.innerHTML = '';
-    list.forEach((t,idx)=>{
-      const rel = sanitizePath(t.path);
-      if (!rel) return;
-      const url = buildUrl(rel);
-      const isPlaying = (state.playingUrl && resolveUrl(state.playingUrl) === resolveUrl(url));
-      const li = document.createElement('div');
-      li.className = 'ae-track'; li.draggable = true;
-      li.dataset.idx = String(idx);
-      li.dataset.path = rel;
-      li.innerHTML = `
-        <div class="grip">⋮⋮</div>
-        <div class="title" title="${t.label}">${String(idx+1).padStart(2,'0')}. ${t.label}</div>
-        <div class="ae-row-actions">
-          <button class="play" type="button">${isPlaying ? 'PLAYING' : 'Play'}</button>
-          <button class="rm" type="button">Remove</button>
-        </div>
-      `;
-      tracksBox.appendChild(li);
-    });
-    bindDnD(); bindTrackRowActions();
-  }
+function renderTracks(list){
+  tracksBox.innerHTML = '';
+  list.forEach((t,idx)=>{
+    const rel = sanitizePath(t.path);
+    if (!rel) return;
+    const url = buildUrl(rel);
+    const isPlaying = (state.playingUrl && resolveUrl(state.playingUrl) === resolveUrl(url));
+    const li = document.createElement('div');
+    li.className = 'ae-track';
+    li.draggable = false;                 // native DnD off (we use SortableJS)
+    li.dataset.idx = String(idx);
+    li.dataset.path = rel;
+    li.innerHTML = `
+      <div class="grip" aria-label="Drag to reorder" title="Drag">⋮⋮</div>
+      <div class="title" title="${t.label}">${String(idx+1).padStart(2,'0')}. ${t.label}</div>
+      <div class="ae-row-actions">
+        <button class="play" type="button">${isPlaying ? 'PLAYING' : 'Play'}</button>
+        <button class="rm" type="button">Remove</button>
+      </div>
+    `;
+    tracksBox.appendChild(li);
+  });
+  bindDnD();
+  bindTrackRowActions();
+}
+
+
+
+
+  
 
   function bindTrackRowActions(){
     qsa('.ae-track', tracksBox).forEach(li=>{
@@ -6252,26 +6262,71 @@ document.addEventListener('keydown', (e)=>{
     });
   }
 
-  function bindDnD(){
-    let src=null;
-    tracksBox.addEventListener('dragstart',e=>{
-      const li = e.target.closest('.ae-track'); if(!li) return;
-      src = Number(li.dataset.idx); e.dataTransfer.effectAllowed='move';
-    });
-    tracksBox.addEventListener('dragover',e=>{
-      if(src==null) return; e.preventDefault(); e.dataTransfer.dropEffect='move';
-    });
-    tracksBox.addEventListener('drop',e=>{
-      if(src==null) return; e.preventDefault();
-      const li = e.target.closest('.ae-track'); if(!li) return;
-      const dst = Number(li.dataset.idx);
-      if (dst===src) { src=null; return; }
-      const item = state.tracks.splice(src,1)[0];
-      state.tracks.splice(dst,0,item);
-      src=null; markDirty(); renderTracks(state.tracks);
-    });
-    tracksBox.addEventListener('dragend',()=>{ src=null; });
-  }
+
+
+async function bindDnD(){
+  // Ensure one Sortable instance
+  if (bindDnD._inited) return;
+  bindDnD._inited = true;
+
+  // ESM bundle with plugins (includes Swap)
+  const SortableMod = await import('https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/modular/sortable.complete.esm.js');
+  const Sortable = SortableMod && (SortableMod.default || SortableMod);
+
+  if (!Sortable) { ERR('SortableJS failed to load'); return; }
+
+  Sortable.create(tracksBox, {
+    handle: '.grip',
+    draggable: '.ae-track',
+    animation: 150,
+    forceFallback: true,           // reliable on iOS
+    fallbackOnBody: true,
+    swap: true,                    // Swap plugin
+    swapClass: 'sortable-swap-highlight',
+    ghostClass: 'sortable-ghost',
+    chosenClass: 'sortable-chosen',
+
+    onChoose(evt){
+      LOG('drag choose', { idx: evt.oldIndex });
+    },
+    onUnchoose(evt){
+      LOG('drag unchoose', { idx: evt.oldIndex });
+    },
+    onEnd(evt){
+      // Rebuild order from DOM
+      const rows = qsa('.ae-track', tracksBox).map((li, i) => {
+        const rel = String(li.dataset.path || '');
+        const label = (li.querySelector('.title')?.textContent || '').replace(/^\s*\d+\.\s*/, '').trim();
+        // Renumber visible titles
+        const titleEl = li.querySelector('.title');
+        if (titleEl) titleEl.textContent = `${String(i+1).padStart(2,'0')}. ${label}`;
+        return { label, path: rel };
+      });
+
+      // Only commit when something actually changed
+      const changed = rows.length === state.tracks.length &&
+                      rows.some((r, i) => r.path !== state.tracks[i].path);
+      if (changed){
+        state.tracks = rows;
+        markDirty();
+        LOG('reordered', { from: evt.oldIndex, to: evt.newIndex, tracks: state.tracks });
+      } else {
+        LOG('no order change');
+      }
+    }
+  });
+}
+
+
+
+
+
+
+
+
+
+
+
 
   // Picker
   function openPicker(){ open(picker); search.value=''; renderResults(libState.items); search.focus(); }

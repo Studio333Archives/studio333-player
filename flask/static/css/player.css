@@ -38,7 +38,7 @@
 /* Theme: Light (default) */
 :root{
   /* control sizing */
-  --ctl-fs: 0.75rem;
+  --ctl-fs: 1rem;
   --ctl-lh: 1.1;
   --ctl-py: 0.45rem;
   --ctl-px: 0.70rem;
@@ -631,7 +631,7 @@ select{
 .acct-panel{ display:none; }
 .acct-panel.is-active{ display:block; }
 .acct-kv{ display:flex; flex-direction: column; gap:16px; margin:0; }
-.acct-kv dt{ opacity:.8; }
+.acct-kv dt{ opacity:.5; }
 .acct-kv dd{ margin:0; }
 .acct-list{ list-style:none; margin:0; padding:0; display:grid; gap:8px; }
 .acct-item{ padding:8px 10px; border:1px solid var(--clr-ui-border); border-radius:8px; background: color-mix(in srgb, var(--bg) 10%, transparent); }
@@ -773,5 +773,22 @@ html { -webkit-text-size-adjust: 100%; touch-action: manipulation; }
 #searchInput, #aeSearch, #aeTitle, #aeBand, #aeDesc, #aeCoverUrl {
   font-size: 16px;
 }
+
+
+
+
+
+/* Album editor — SortableJS states (mobile-friendly, no text selection/magnifier) */
+.ae-track { touch-action: manipulation; -webkit-user-select: none; user-select: none; }
+.ae-track .grip { cursor: grab; -webkit-user-select: none; user-select: none; touch-action: none; }
+.ae-track .grip:active { cursor: grabbing; }
+
+/* Sortable visual states */
+.ae-track.sortable-chosen { outline: 2px solid color-mix(in srgb, var(--fg) 35%, transparent); }
+.ae-track.sortable-ghost  { opacity: .55; background: color-mix(in srgb, var(--bg) 24%, transparent); }
+.ae-track.sortable-fallback { opacity: .75; }
+.ae-track.sortable-swap-highlight { box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent, #ff0245) 55%, transparent) inset; }
+
+
 
 
