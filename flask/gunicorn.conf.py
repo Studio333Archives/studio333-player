@@ -1,0 +1,11 @@
+bind = "127.0.0.1:8001"
+workers = 2
+threads = 2
+worker_class = "gthread"
+timeout = 60
+graceful_timeout = 30
+keepalive = 5
+pidfile = "/var/www/studio333.art/flask/gunicorn.pid"
+accesslog = "/var/www/studio333.art/flask/gunicorn.access.log"
+errorlog  = "/var/www/studio333.art/flask/gunicorn.error.log"
+loglevel = "info"

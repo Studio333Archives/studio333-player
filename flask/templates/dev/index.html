@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Dev Tools</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root { --bg:#f6f7f9; --card:#ffffff; --text:#111; --line:#e5e5e5; --muted:#666; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif; }
+    .container { padding:16px; max-width:1000px; margin:0 auto; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:12px; }
+    .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px; }
+    .card h3 { margin:0 0 6px; font-size:16px; }
+    .card p { margin:0 0 10px; color:var(--muted); font-size:14px; }
+    .btn { display:inline-block; padding:8px 10px; border:1px solid var(--line); border-radius:8px; color:#111; text-decoration:none; background:#fafafa; font-size:14px; }
+  </style>
+</head>
+<body>
+
+  {% include 'includes/dev_header.html' %}
+
+  <div class="container">
+    <h2 style="margin:6px 0 12px;">Developer Tools</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>DB Tables</h3>
+        <p>Markdown snapshot of `public` schema with one-click copy.</p>
+        <a class="btn" href="/dev/db_tables">Open</a>
+      </div>
+      <div class="card">
+        <h3>Routes</h3>
+        <p>Inspect registered routes, source, and edit docs.</p>
+        <a class="btn" href="/dev/routes">Open</a>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

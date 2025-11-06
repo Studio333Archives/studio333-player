@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Albums</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/static/css/albums.css">
+</head>
+<body>
+  <header class="alb-header">
+    <div class="left">
+      <h1>Albums</h1>
+      <div class="new-album">
+        <input id="albTitle" placeholder="Album title">
+        <input id="albSlug"  placeholder="slug-for-url">
+        <button id="albCreateBtn">Create</button>
+        <select id="albumSelect"></select>
+        <button id="loadAlbumBtn">Open</button>
+      </div>
+    </div>
+    <div class="right">
+      <div class="current-album">
+        <div class="label">Current album</div>
+        <div id="currentAlbumTitle" class="title">—</div>
+      </div>
+      <div class="playlist-name">
+        <input id="variantName" placeholder="Playlist name (variant, e.g. preview / hires)">
+      </div>
+    </div>
+  </header>
+
+  <section class="toolbar">
+    <input id="q" placeholder="Type to search media… (title or path)">
+  </section>
+
+  <main class="columns">
+    <section class="left-col">
+      <h2 class="col-title">Search Results</h2>
+      <div id="results" class="results"></div>
+      <div class="actions">
+        <button id="addSelectedBtn" disabled>Add selected → album</button>
+      </div>
+    </section>
+
+    <section class="right-col">
+      <h2 class="col-title">Album Tracks</h2>
+      <ol id="tracks"></ol>
+      <div class="actions">
+        <button id="saveOrderBtn" disabled>Save order</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="/static/js/albums.js" type="module"></script>
+</body>
+</html>

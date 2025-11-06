@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin Routes</title>
+  <style>
+    :root { --bg:#fafafa; --card:#fff; --text:#111; --muted:#666; --line:#ddd; --accent:#0a84ff; }
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin:0; background:var(--bg); color:var(--text); }
+
+    nav.devbar { position: sticky; top:0; z-index:10; background: var(--card); border-bottom:1px solid var(--line); display:flex; align-items:center; gap:12px; padding:10px 16px; }
+    nav.devbar a { text-decoration:none; color: var(--text); padding:6px 10px; border:1px solid var(--line); border-radius:6px; background:#fafafa; font-size:14px; }
+    nav.devbar a.active { border-color: var(--accent); color:#fff; background: var(--accent); }
+
+    .routes-wrap { padding: 16px; }
+    .table-scroll { overflow-x: auto; max-height: 70vh; overflow-y: auto; border: 1px solid var(--line); background:var(--card); border-radius:8px; }
+    .routes-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 0.78rem; }
+    .routes-table thead th { position: sticky; top: 0; background: #fafafa; z-index: 2; }
+    .routes-table th, .routes-table td { padding: 8px 10px; border-bottom: 1px solid #e5e5e5; vertical-align: top; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .routes-table col.c-path{width:30%}.routes-table col.c-methods{width:12%}.routes-table col.c-endpoint{width:18%}.routes-table col.c-doc{width:28%}.routes-table col.c-srcdoc{width:6%}.routes-table col.c-action{width:6%}
+    .mono { font-family: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace; }
+    .pill { display:inline-block;padding:2px 6px;border:1px solid #ccc;border-radius:4px;font-size:.68rem;margin:0 4px 4px 0;white-space:nowrap; }
+    .muted { color:#666;font-size:.75rem; }
+    .doc-cell { white-space: normal; }
+    .doc-text { display:inline; }
+    .doc-more { display:none; }
+    .doc-toggle { border:0;background:none;color:#007bff;cursor:pointer;font-size:.75rem;padding:0 0 0 6px; }
+    .crop.show-tail { direction: rtl; text-align: left; }
+    .ta-right { text-align:right; }
+    .toolbar { display:flex; gap:8px; align-items:center; margin-bottom:10px; flex-wrap:wrap; }
+    .toolbar input[type="text"] { padding:6px 8px; width:280px; max-width:60vw; }
+    .toolbar .btn { padding:6px 10px; border:1px solid #ccc; background:#f7f7f7; border-radius:6px; cursor:pointer; font-size:.78rem; }
+
+    .modal { display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.7); }
+    .modal-content { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:98vw; height:92vh; background:#fff; border-radius:10px; box-shadow:0 10px 30px rgba(0,0,0,0.35); display:flex; gap:1rem; padding:1rem; overflow:hidden; }
+    #codePane { flex:1 1 50%; min-width:50%; border:1px solid #ddd; border-radius:6px; overflow:auto; background:#0f172a; color:#e2e8f0; padding:10px; }
+    #docEditorPane { flex:1 1 50%; display:flex; flex-direction:column; overflow:hidden; }
+    #routeMeta { margin-bottom:.75rem; overflow:hidden; }
+    #routeMeta h3 { margin:0 0 .25rem 0; word-break:break-all; font-size:1rem; }
+    #sourceDoc { font-style:italic; font-size:.9rem; color:#555; margin-bottom:.75rem; padding:.5rem; background:#f8f8f8; border-radius:4px; max-height:20vh; overflow:auto; white-space:pre-wrap; }
+    #docTextarea { flex:1; min-height:0; padding:8px; font-size:.95rem; border-radius:6px; border:1px solid #aaa; resize:vertical; }
+    .modal-actions { display:flex; gap:8px; justify-content:flex-end; margin-top:.75rem; }
+    .btn { padding:8px 12px; border:none; border-radius:6px; cursor:pointer; }
+    .btn-save { background:#28a745; color:#fff; }
+    .btn-cancel { background:#ccc; }
+
+    @media (max-width: 900px) {
+      .routes-table { display:block; }
+      .routes-table thead { display:none; }
+      .routes-table tbody { display:grid; gap:10px; }
+      .routes-table tr { display:grid; grid-template-columns:1fr; padding:8px; border:1px solid #eee; border-radius:8px; }
+      .routes-table td { display:grid; grid-template-columns:110px 1fr; white-space: normal; }
+      .routes-table td::before { content: attr(data-label); font-weight:600; color:#444; padding-right:8px; }
+      .routes-table colgroup { display:none; }
+      .modal-content { flex-direction:column; }
+      #codePane, #docEditorPane { min-width:100%; flex-basis:auto; height:45vh; }
+    }
+  </style>
+</head>
+<body>
+
+  {% include 'includes/dev_header.html' %}
+
+  <div class="routes-wrap">
+    <h2>Registered Routes</h2>
+
+    <div class="toolbar">
+      <input type="text" id="searchBox" placeholder="Search..." oninput="filterRoutes()">
+      <button class="btn" id="toggleTail" title="Toggle show end of long strings">Show Ends</button>
+      <span class="muted">Total routes: <span id="routeCount">{{ routes|length }}</span></span>
+    </div>
+
+    <div class="table-scroll">
+      <table class="routes-table" id="routesTable" aria-label="Registered routes">
+        <colgroup>
+          <col class="c-path"><col class="c-methods"><col class="c-endpoint"><col class="c-doc"><col class="c-srcdoc"><col class="c-action">
+        </colgroup>
+        <thead>
+          <tr><th>Path</th><th>Methods</th><th>Endpoint</th><th>Documentation</th><th>Source Doc</th><th class="ta-right">Action</th></tr>
+        </thead>
+        <tbody>
+          {% for r in routes %}
+          {% set doc_text = r.doc or 'No documentation' %}
+          {% set src_text = r.source_doc or '' %}
+          <tr class="route-row" data-id="{{ r.id }}">
+            <td class="mono crop" title="{{ r.rule }}" data-label="Path"><span class="truncate" data-max="76">{{ r.rule }}</span></td>
+            <td class="methods" data-label="Methods">{% for m in r.methods %}<span class="pill {{ m|lower }}">{{ m }}</span>{% endfor %}</td>
+            <td class="mono crop" title="{{ r.endpoint }}" data-label="Endpoint"><span class="truncate" data-max="44">{{ r.endpoint }}</span></td>
+            <td class="doc-cell" title="{{ doc_text }}" data-label="Documentation">
+              <span class="doc-text" data-short="true">{{ doc_text[:140] }}{% if doc_text|length > 140 %}…{% endif %}</span>
+              {% if doc_text|length > 140 %}<span class="doc-more">{{ doc_text }}</span><button class="doc-toggle" onclick="toggleDoc(this)">More</button>{% endif %}
+            </td>
+            <td class="muted" title="{{ src_text }}" data-label="Source Doc">{{ src_text }}</td>
+            <td class="ta-right" data-label="Action"><button class="btn" onclick="openModal({{ r.id }})">Edit</button></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% if routes|length == 0 %}<div class="muted">No routes found.</div>{% endif %}
+    </div>
+  </div>
+
+  <div id="docModal" class="modal" aria-hidden="true">
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="routePath">
+      <pre id="codePane"></pre>
+      <div id="docEditorPane">
+        <div id="routeMeta">
+          <h3 id="routePath"></h3>
+          <p><strong>Methods:</strong> <span id="routeMethods"></span></p>
+          <p><strong>Endpoint:</strong> <span id="routeEndpoint"></span></p>
+        </div>
+        <div id="sourceDoc"></div>
+        <label for="docTextarea">Documentation</label>
+        <textarea id="docTextarea"></textarea>
+        <div class="modal-actions">
+          <button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
+          <button class="btn btn-save" onclick="saveDoc()">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentRouteId = null, showingTail = false;
+
+    function middleTruncate(text, max){ if(!text) return ''; const l=text.length; if(l<=max) return text; const k=Math.max(2,Math.floor((max-1)/2)); return text.slice(0,k)+'…'+text.slice(l-k); }
+    function applyTruncation(){ document.querySelectorAll('.truncate').forEach(s=>{ const m=parseInt(s.getAttribute('data-max')||'60',10); const f=s.getAttribute('data-full')||s.textContent; s.setAttribute('data-full',f); s.textContent = middleTruncate(f,m); }); }
+    function toggleTailMode(){ showingTail=!showingTail; document.getElementById('toggleTail').textContent = showingTail?'Show Start':'Show Ends'; document.querySelectorAll('.crop').forEach(td=>td.classList.toggle('show-tail',showingTail)); }
+    function filterRoutes(){ const q=(document.getElementById('searchBox').value||'').toLowerCase(); const rows=document.querySelectorAll('#routesTable .route-row'); let visible=0; rows.forEach(r=>{ const show=r.innerText.toLowerCase().includes(q); r.style.display = show ? '' : 'none'; if(show) visible++; }); document.getElementById('routeCount').textContent=visible; }
+
+    async function fetchJson(url){
+      const resp = await fetch(url, { method:'GET' });
+      if(!resp.ok) throw new Error('HTTP '+resp.status);
+      if(!(resp.headers.get('content-type')||'').includes('application/json')) throw new Error('Unexpected content-type');
+      return resp.json();
+    }
+
+    function openModal(routeId){
+      currentRouteId = routeId;
+      fetchJson(`/dev/routes/${routeId}/details`).then(data=>{
+        document.getElementById('routePath').textContent = data.path;
+        document.getElementById('routeMethods').textContent = (data.methods||[]).join(', ');
+        document.getElementById('routeEndpoint').textContent = data.endpoint;
+        document.getElementById('sourceDoc').textContent = (data.source_docstring||'').trim() || '(No source docstring available)';
+        document.getElementById('docTextarea').value = data.doc || '';
+        document.getElementById('codePane').textContent = data.source_code || '# Source not available';
+
+        const modal=document.getElementById('docModal'); modal.style.display='block'; modal.setAttribute('aria-hidden','false');
+      }).catch(()=>{ alert('Failed to load route details'); });
+    }
+
+    function closeModal(){ const m=document.getElementById('docModal'); m.style.display='none'; m.setAttribute('aria-hidden','true'); }
+
+    function saveDoc(){
+      const newDoc=document.getElementById('docTextarea').value;
+      fetch('/dev/routes/update_doc', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id: currentRouteId, doc: newDoc }) })
+      .then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status);
+        const cell=document.querySelector(`tr[data-id="${currentRouteId}"] .doc-cell`);
+        if(cell){
+          cell.title=newDoc||'No documentation';
+          const t=cell.querySelector('.doc-text'); const m=cell.querySelector('.doc-more'); const b=cell.querySelector('.doc-toggle');
+          if(t){ t.textContent=(newDoc||'No documentation').slice(0,140)+(newDoc && newDoc.length>140?'…':''); t.dataset.short='true'; }
+          if(m){ m.textContent=newDoc; if(!(newDoc && newDoc.length>140)) m.remove(); }
+          if(!m && newDoc && newDoc.length>140){ const s=document.createElement('span'); s.className='doc-more'; s.textContent=newDoc; cell.appendChild(s); }
+          if(!b && newDoc && newDoc.length>140){ const bb=document.createElement('button'); bb.className='doc-toggle'; bb.textContent='More'; bb.onclick=function(){toggleDoc(bb)}; cell.appendChild(bb); }
+        }
+        closeModal();
+      })
+      .catch(()=>{ alert('Failed to save'); });
+    }
+
+    function toggleDoc(btn){
+      const cell=btn.closest('.doc-cell'); const shortSpan=cell.querySelector('.doc-text'); const longSpan=cell.querySelector('.doc-more'); const isShort=shortSpan && shortSpan.dataset.short==='true';
+      if(isShort){ if(longSpan) longSpan.style.display='inline'; if(shortSpan) shortSpan.style.display='none'; btn.textContent='Less'; shortSpan.dataset.short='false'; }
+      else { if(longSpan) longSpan.style.display='none'; if(shortSpan) shortSpan.style.display='inline'; btn.textContent='More'; shortSpan.dataset.short='true'; }
+    }
+
+    document.addEventListener('DOMContentLoaded', function(){ applyTruncation(); document.getElementById('toggleTail').addEventListener('click', toggleTailMode); });
+    window.addEventListener('click', e=>{ const m=document.getElementById('docModal'); if(e.target===m) closeModal(); });
+    window.addEventListener('keydown', e=>{ if(e.key==='Escape') closeModal(); });
+  </script>
+</body>
+</html>

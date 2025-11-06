@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Edit Profile</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    :root { --bg:#0b0b0c; --card:#121315; --text:#e7e7ea; --line:#2a2c30; --muted:#a3a3a8; }
+    * { box-sizing: border-box; }
+    body { margin:0; background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif; }
+    h2 { margin:6px 0 12px; }
+    .container { padding:16px; max-width:1200px; margin:0 auto; }
+
+    /* cards/buttons match /dashboard and /dev */
+    .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px; }
+    .btn { display:inline-block; padding:8px 10px; border:1px solid var(--line); border-radius:8px; color:var(--text); text-decoration:none; background:#191a1d; font-size:14px; }
+    .btn:hover { border-color:#3a3d43; }
+    .btn.secondary { background:#151619; color:var(--text); }
+
+    /* layout */
+    .grid { display:grid; grid-template-columns:320px 1fr; gap:12px; }
+    @media (max-width: 960px) { .grid { grid-template-columns:1fr; } }
+
+    /* avatar */
+    .avatar-wrap { display:flex; flex-direction:column; align-items:center; gap:10px; }
+    .avatar { width:240px; height:240px; border-radius:12px; border:1px solid var(--line); object-fit:cover; background:#0f1012; }
+    .avatar-upload { display:none; }
+    .help { color:var(--muted); font-size:12px; }
+
+    /* fields */
+    .row { display:grid; gap:8px; }
+    .field { background:#191a1d; border:1px solid var(--line); border-radius:10px; padding:10px 12px; }
+    .field input, .field textarea { all:unset; color:var(--text); font-size:14px; width:100%; }
+    .field textarea { min-height:120px; }
+
+    /* flash */
+    .flash { margin:10px 0; padding:10px 12px; border-radius:8px; border:1px solid #3a3d43; background:#151619; font-size:14px; }
+  </style>
+</head>
+<body>
+
+  {% include 'includes/dev_header.html' %}
+
+  <div class="container">
+    <h2>Edit Profile</h2>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash">{{ messages[0][1] }}</div>
+    {% endif %}
+    {% endwith %}
+
+    <form method="POST" enctype="multipart/form-data">
+      <div class="card">
+        <div class="grid">
+
+          <!-- Avatar -->
+          <div class="avatar-wrap">
+            <label for="avatar-upload">
+              <img
+              src="{{ profile.avatar if profile.avatar else url_for('static', filename='img/default-avatar.png') }}"
+              alt="Avatar"
+              class="avatar"
+              id="avatar-preview">
+            </label>
+            <input type="file" name="avatar_file" id="avatar-upload" class="avatar-upload" accept="image/*">
+            <div class="help">Click the image to upload a new avatar</div>
+          </div>
+
+          <!-- Fields -->
+          <div class="row">
+            <div class="field"><input type="text" name="nickname" value="{{ nickname }}" placeholder="Nickname" required></div>
+            <div class="field"><input type="text" name="avatar" value="{{ profile.avatar }}" placeholder="Avatar URL"></div>
+            <div class="field"><textarea name="bio" placeholder="Bio">{{ profile.bio }}</textarea></div>
+            <div class="field"><input type="text" name="phone" value="{{ profile.phone }}" placeholder="Phone"></div>
+            <div class="field"><input type="text" name="homepage" value="{{ profile.homepage }}" placeholder="Homepage URL"></div>
+            <div class="field"><input type="text" name="twitter" value="{{ profile.twitter }}" placeholder="Twitter Handle"></div>
+            <div class="field"><input type="text" name="linkedin" value="{{ profile.linkedin }}" placeholder="LinkedIn URL"></div>
+            <div class="field"><input type="text" name="github" value="{{ profile.github }}" placeholder="GitHub Username"></div>
+
+            <div style="display:flex; gap:10px; margin-top:4px;">
+              <button type="submit" class="btn">Update Profile</button>
+              <a href="{{ url_for('dashboard') }}" class="btn secondary" role="button">Back to Dashboard</a>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    (function(){
+      var input = document.getElementById('avatar-upload');
+      var img   = document.getElementById('avatar-preview');
+      if (!input || !img) return;
+      input.addEventListener('change', function(){
+        var f = input.files && input.files[0];
+        if (!f) return;
+        var r = new FileReader();
+        r.onload = function(e){ img.src = e.target.result; };
+        r.readAsDataURL(f);
+      });
+    })();
+  </script>
+</body>
+</html>

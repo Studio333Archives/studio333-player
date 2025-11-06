@@ -1,0 +1,422 @@
+{# templates/index.html — drop-in replacement #}
+{% extends "base.html" %}
+{% block title %}studio333.art{% endblock %}
+{% block content %}
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/player.css') }}">
+
+<!-- Import maps for ESM deps -->
+<script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.180.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.180.0/examples/jsm/",
+      "lil-gui": "https://cdn.jsdelivr.net/npm/lil-gui@0.18/dist/lil-gui.esm.min.js"
+    }
+  }
+</script>
+
+<!-- HLS and DASH -->
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.6/dist/hls.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dashjs@4.7.3/dist/dash.all.min.js"></script>
+
+<!-- Hidden preset loader -->
+<input id="presetFile" type="file" accept="application/json" hidden>
+
+<!-- RENDER CONTAINER (must be a DIV; player1.js appends its own canvas) -->
+<div id="app"
+data-base="{{ url_for('media', filename='archives') }}"
+data-tree="{{ url_for('media', filename='archives/audioteka.txt') }}">
+</div>
+
+<!-- Overlay CTA -->
+<div class="ui-overlay">
+  <button class="rb-btn" id="overlayCTA"><span>Start</span></button>
+</div>
+
+<!-- Search UI -->
+<button id="searchToggle" title="Search" aria-controls="searchPanel" aria-expanded="false">
+  <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="none" viewBox="0 -0.5 25 25">
+    <path stroke="white" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+    d="M7.305 15.714A6.3 6.3 0 0 1 5.618 12.5a6.4 6.4 0 0 1 .351-3.625 6.25 6.25 0 0 1 2.27-2.817 6.07 6.07 0 0 1 6.848 0 6.25 6.25 0 0 1 2.27 2.817 6.4 6.4 0 0 1 .351 3.625 6.3 6.3 0 0 1-1.687 3.214 6.085 6.085 0 0 1-8.716 0" />
+    <path fill="white"
+    d="M11.67 7.203a.75.75 0 0 0 .158 1.492zm1.852 2.49a.75.75 0 1 0 1.38-.586zm3.12 5.394a.75.75 0 1 0-1.06 1.061zm2.328 4.444a.75.75 0 1 0 1.06-1.062zM11.828 8.695a1.65 1.65 0 0 1 1.694.997l1.38-.585a3.15 3.15 0 0 0-3.232-1.904zm3.754 7.453 3.388 3.383 1.06-1.062-3.388-3.382z" />
+  </svg>
+</button>
+
+<div id="searchPanel" class="hidden" role="dialog" aria-modal="false">
+  <input id="searchInput" type="text" placeholder="Search… (type to filter, Enter to play)" autocomplete="off">
+  <ul id="searchResults"></ul>
+</div>
+
+<!-- Playlist select -->
+<select id="playlistSelect" title="Playlist"></select>
+
+<!-- Controls -->
+<div id="ui">
+  <button id="webcamBtn" type="button">Webcam: OFF</button>
+  <label class="btn" for="imgInput">Image…</label><input id="imgInput" type="file" accept="image/*">
+  <label class="btn" for="vidInput">Video…</label><input id="vidInput" type="file" accept="video/*">
+  <label class="btn" for="audioInput">Audio…</label><input id="audioInput" type="file" accept="audio/*">
+  <button id="startBtn" type="button" title="Start/unmute audio context if needed">Start</button>
+  <button id="prevBtn" type="button">Prev</button>
+  <button id="nextBtn" type="button">Next</button>
+  <input id="loopChk" type="checkbox"><label for="loopChk">Loop</label>
+  <button id="clearBtn" type="button">Clear</button>
+</div>
+
+<!-- Mobile toggles -->
+<button id="uiToggleBtn" type="button" aria-label="Toggle UI">
+  <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+    <circle cx="12" cy="12" r="10"></circle>
+    <path d="M8 12h8M12 8v8" stroke-width="2" stroke-linecap="round" fill="none"></path>
+  </svg>
+</button>
+
+<button id="helpBtn" type="button" aria-label="Show shortcuts" title="Shortcuts">?</button>
+
+<div id="shortcutsModal" class="help-modal hidden" role="dialog" aria-modal="true" aria-labelledby="shortcutsTitle">
+  <div class="help-panel">
+
+    <div class="help-head">
+      <h2 id="shortcutsTitle">Shortcuts</h2>
+      <button id="helpClose" type="button" aria-label="Close" title="Close">
+        <img src="media/icons/x-close.svg" alt="" width="20" height="20">
+      </button>
+    </div>
+
+    <ul class="help-list">
+      <li><kbd>?</kbd> or <kbd>Shift</kbd>+<kbd>/</kbd> — Open/close this panel</li>
+      <li><kbd>Esc</kbd> — Toggle UI (controls + lil-gui)</li>
+      <li><kbd>F</kbd> — Fullscreen toggle</li>
+      <li><kbd>0</kbd> — Camera: top hover mode</li>
+      <li><kbd>1</kbd> … <kbd>9</kbd> — Camera fly modes</li>
+      <li><kbd>←</kbd>/<kbd>→</kbd> — Prev/Next in playlist (if enabled)</li>
+      <li><kbd>Enter</kbd> (in Search) — Play selected</li>
+    </ul>
+  </div>
+</div>
+
+<button id="themeToggle" type="button" aria-label="Toggle theme" title="Toggle theme">
+  <img src="media/icons/moon.svg" alt="" width="18" height="18">
+</button>
+
+
+<!-- Login UI — insert between the closing </div> of #shortcutsModal and the existing <button id="themeToggle"...> -->
+  <button id="loginBtn" type="button" aria-label="Login" title="Login">
+    <img src="media/icons/user.svg" alt="" width="18" height="18">
+  </button>
+
+  <div id="loginModal" class="help-modal hidden" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
+    <div class="help-panel">
+
+      <div class="help-head">
+        <h2 id="loginTitle">Login</h2>
+        <button id="loginClose" type="button" aria-label="Close" title="Close">
+          <img src="media/icons/x-close.svg" alt="" width="20" height="20">
+        </button>
+
+      </div>
+
+      <div id="loginError" class="form-error hidden" role="alert" aria-live="assertive"></div>
+
+      <form id="loginForm" action="/login" method="post" autocomplete="on" novalidate>
+        <div class="form-row">
+          <label for="loginEmail">Email</label>
+          <input id="loginEmail" name="email" type="email" required>
+        </div>
+        <div class="form-row">
+          <label for="loginPassword">Password</label>
+          <input id="loginPassword" name="password" type="password" required>
+        </div>
+        <div class="form-actions">
+          <button type="submit">Sign in</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+<!-- Account overlay -->
+<div id="accountModal" class="help-modal hidden" role="dialog" aria-modal="true" aria-labelledby="accountTitle">
+  <div class="help-panel">
+
+    <div class="help-head">
+      <h2 id="accountTitle">Account</h2>
+      <button id="accountClose" type="button" aria-label="Close" title="Close">
+        <img src="media/icons/x-close.svg" alt="" width="20" height="20">
+      </button>
+    </div>
+
+
+    <div class="acct-head">
+      <img id="acctAvatar" class="acct-avatar" src="media/icons/user.svg" alt="">
+      <div class="acct-meta">
+        <div id="acctName" class="acct-name">Guest</div>
+        <div id="acctEmail" class="acct-email"></div>
+      </div>
+    </div>
+
+    <div class="acct-tabs" role="tablist" aria-label="Account">
+      <button class="acct-tab is-active" data-tab="profile" role="tab" aria-selected="true">Profile</button>
+      <button class="acct-tab" data-tab="albums" role="tab" aria-selected="false">Albums</button>
+      <button class="acct-tab" data-tab="logout" role="tab" aria-selected="false">Logout</button>
+    </div>
+
+    <div class="acct-panels">
+      <section id="acctPanel-profile" class="acct-panel is-active" role="tabpanel">
+        <dl class="acct-kv">
+          <div><dt>Name</dt><dd id="kvName">—</dd></div>
+          <div><dt>Email</dt><dd id="kvEmail">—</dd></div>
+          <div><dt>Joined</dt><dd id="kvJoined">—</dd></div>
+        </dl>
+      </section>
+
+      <!-- Albums panel -->
+      <section id="acctPanel-albums" class="acct-panel" role="tabpanel">
+        <ul id="acctAlbums" class="albums-grid" aria-label="Your albums"></ul>
+      </section>
+
+
+      <section id="acctPanel-logout" class="acct-panel" role="tabpanel">
+        <button id="acctLogoutBtn" type="button">Logout</button>
+      </section>
+    </div>
+  </div>
+</div>
+
+
+
+
+<!-- Album Editor overlay -->
+<div id="albumEditor" class="help-modal hidden" role="dialog" aria-modal="true" aria-labelledby="albumEditorTitle">
+  <div class="help-panel album-editor">
+    <div class="help-head">
+      <h2 id="albumEditorTitle">Edit album</h2>
+      <button id="albumEditorClose" type="button" aria-label="Close" title="Close">
+        <img src="media/icons/x-close.svg" alt="" width="20" height="20">
+      </button>
+    </div>
+
+    <form id="albumEditorForm" autocomplete="off">
+      <input type="hidden" id="aeId" value="">
+      <div class="ae-row">
+        <div class="ae-left">
+          <div class="ae-cover">
+            <img id="aeCoverImg" alt="">
+          </div>
+
+          <!-- Album Editor: cover controls (validation-free input + upload) -->
+          <div class="ae-cover-ctrls">
+            <input id="aeCoverUrl" type="text" placeholder="Cover URL (optional)">
+            <label class="btn" for="aeCoverFile">Upload…</label>
+            <input id="aeCoverFile" type="file" accept="image/*">
+          </div>
+
+
+          
+          <div class="ae-vis">
+            <label for="aeVisibility">Visibility</label>
+            <select id="aeVisibility">
+              <option value="private">Private</option>
+              <option value="unlisted">Unlisted</option>
+              <option value="public">Public</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="ae-right">
+          <div class="ae-field">
+            <label for="aeTitle">Title</label>
+            <input id="aeTitle" type="text" required>
+          </div>
+          <div class="ae-field">
+            <div class="ae-field-head">
+              <label for="aeDesc">Information</label>
+              <button id="aeInfoToggle" type="button" aria-expanded="true">Collapse</button>
+            </div>
+            <textarea id="aeDesc" rows="6" placeholder="Markdown description…"></textarea>
+          </div>
+
+          <div class="ae-field">
+            <div class="ae-field-head">
+              <span>Tracks</span>
+              <div class="ae-actions">
+                <button id="aeAddTracks" type="button">Add tracks</button>
+                <button id="aeSave" type="submit">Save album</button>
+              </div>
+            </div>
+            <div id="aeTracks" class="ae-tracks" aria-label="Tracks (drag to reorder)"></div>
+          </div>
+        </div>
+      </div>
+    </form>
+
+    <div id="aePicker" class="ae-picker hidden" role="dialog" aria-modal="true" aria-labelledby="aePickerTitle">
+      <div class="ae-picker-head">
+        <h3 id="aePickerTitle">Add tracks</h3>
+        <div class="ae-picker-actions">
+          <input id="aeSearch" type="text" placeholder="Search library…">
+          <button id="aePickerClose" type="button">Close</button>
+        </div>
+      </div>
+      <ul id="aeResults" class="ae-results"></ul>
+    </div>
+  </div>
+</div>
+
+
+
+
+<!--   {% if logged_in %}
+  <div class="hud">
+    <a href="{{ url_for('dashboard') }}">dashboard</a> ·
+    <a href="{{ url_for('logout') }}">logout</a>
+  </div>
+  {% endif %} -->
+
+
+
+  <script type="module" src="{{ url_for('static', filename='js/player1.js') }}"></script>
+
+
+
+<!-- Analytics (lazy, safest): placed before </body> -->
+<script>
+  (function(){
+    function loadAnalytics(){
+      var s = document.createElement('script');
+      s.src = 'https://analytics.mielniczuk.com/script.js';
+      s.async = true; s.defer = true;
+      s.setAttribute('data-website-id','61813664-ec96-4d31-bd70-33d538a3788a');
+      s.onerror = function(){ /* silently ignore */ };
+      document.head.appendChild(s);
+    }
+    if ('requestIdleCallback' in window){
+      requestIdleCallback(loadAnalytics, { timeout: 2000 });
+    } else {
+      window.addEventListener('load', loadAnalytics);
+    }
+  })();
+
+
+
+</script>
+
+
+
+<style id="gui-touch-overrides">
+
+  .lil-gui {
+    --font-size: 13px;
+    --input-font-size: 12px;
+    --padding: 3px;
+    --spacing: 2px;
+    --widget-height: 18px;
+    --name-width: 50%;
+    --slider-knob-width: 3px;
+    --slider-input-width: 28%;
+    --color-input-width: 28%;
+    --slider-input-min-width: 46px;
+    --color-input-min-width: 46px;
+    --folder-indent: 8px;
+    --widget-border-radius: 1px;
+    --scrollbar-width: 6px;
+    font-family: "CALC", system-ui, -apple-system, Segoe UI, Avenir, sans-serif;
+    letter-spacing: 0;
+  }
+
+  .lil-gui .controller.number.hasSlider input {
+    flex-shrink: 0;
+    margin-left: var(--spacing);
+    min-width: var(--slider-input-min-width);
+    width: var(--slider-input-width);
+    font-family: 'LED';
+  }
+
+  .lil-gui .controller.number .fill {
+    border-right: var(--slider-knob-width) solid #ff0245;
+    box-sizing: content-box;
+    height: 100%;
+  }
+
+  .lil-gui button {
+    -webkit-tap-highlight-color: transparent;
+    background: var(--widget-color);
+    border: 1px solid var(--widget-color);
+    border-radius: var(--widget-border-radius);
+    color: var(--text-color);
+    cursor: pointer;
+    font-family: NEBULA;
+    font-size: var(--font-size);
+    height: var(--widget-height);
+    line-height: calc(var(--widget-height) - 4px);
+    outline: none;
+    text-align: center;
+    text-transform: none;
+    width: 100%;
+  }
+
+
+  .lil-gui .folder-deformation > .title{
+    color: var(--gui-titles);
+  }
+
+
+  .lil-gui.root>.children>.lil-gui>.title {
+    border-width: 0;
+    border-bottom: 1px solid var(--widget-color);
+    border-left: 0 solid var(--widget-color);
+    border-right: 0 solid var(--widget-color);
+    border-top: 1px solid var(--widget-color);
+    transition: border-color .3s;
+    color: var(--gui-titles);
+  }
+
+
+  /* Touch devices — ONLY applies when the GUI root has .allow-touch-styles */
+  @media (pointer: coarse) {
+    .lil-gui.allow-touch-styles,
+    .lil-gui.allow-touch-styles .lil-gui {
+      --widget-height: 20px;
+      --padding: 2px;
+      --spacing: 2px;
+      --font-size: 0.75rem;
+      --input-font-size: 0.75rem;          /* iOS: prevents zoom on inputs */
+      --folder-indent: 10px;
+      --scrollbar-width: 7px;
+      --slider-input-min-width: 50px;
+      --color-input-min-width: 65px;
+    }
+
+    .lil-gui.autoPlace {
+      max-height: 78%;
+      position: fixed;
+      right: -4px;
+      top: 0;
+      z-index: 1001;
+    }
+
+
+  }
+
+
+</style>
+
+<script>
+
+  (function enableGuiTouchStyles(){
+    if (!window.gui) return;
+    const root = gui.domElement;              
+    if (window.matchMedia('(pointer: coarse)').matches) {
+      root.classList.add('allow-touch-styles');
+    }
+  // make sure our style block is last so its custom properties win
+    const st = document.getElementById('gui-touch-overrides');
+    if (st && st.parentNode) st.parentNode.appendChild(st);
+  })();
+
+</script>
+
+
+{% endblock %}

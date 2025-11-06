@@ -1,0 +1,11 @@
+<nav class="devbar" role="navigation" aria-label="Developer tools" style="position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid #ddd;display:flex;align-items:center;gap:12px;padding:10px 16px;">
+  <a href="/dashboard" style="text-decoration:none;color:#111;padding:6px 10px;border:1px solid #ddd;border-radius:6px;background:#fafafa;">Dashboard</a>
+  <a href="/dev"           class="{% if request.path == '/dev' %}active{% endif %}"           style="text-decoration:none;color:#111;padding:6px 10px;border:1px solid #ddd;border-radius:6px;background:#fafafa;">Dev Home</a>
+  <a href="/dev/db_tables" class="{% if request.path.startswith('/dev/db_tables') %}active{% endif %}" style="text-decoration:none;color:#111;padding:6px 10px;border:1px solid #ddd;border-radius:6px;background:#fafafa;">DB Tables</a>
+  <a href="/dev/routes"    class="{% if request.path.startswith('/dev/routes') %}active{% endif %}"    style="text-decoration:none;color:#111;padding:6px 10px;border:1px solid #ddd;border-radius:6px;background:#fafafa;">Routes</a>
+  <a href="/bart"          class="{% if request.path.startswith('/bart') %}active{% endif %}"          style="text-decoration:none;color:#111;padding:6px 10px;border:1px solid #ddd;border-radius:6px;background:#fafafa;">BART</a>
+  <a href="/"              style="text-decoration:none;color:#111;padding:6px 10px;border:1px solid #ddd;border-radius:6px;background:#fafafa;">Player</a>
+  <span style="margin-left:auto"></span>
+  <a href="/profile" style="text-decoration:none;color:#111;padding:6px 10px;border:1px solid #ddd;border-radius:6px;background:#fafafa;">Profile</a>
+  <a href="/logout"  style="text-decoration:none;color:#111;padding:6px 10px;border:1px solid #ddd;border-radius:6px;background:#fafafa;">Logout</a>
+</nav>

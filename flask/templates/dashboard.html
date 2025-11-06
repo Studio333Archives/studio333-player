@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root { --bg:#0b0b0c; --card:#121315; --text:#e7e7ea; --line:#2a2c30; --muted:#a3a3a8; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif; }
+    .container { padding:16px; max-width:1200px; margin:0 auto; }
+    .cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:12px; }
+    .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px; }
+    .card h3 { margin:0 0 8px; font-size:16px; }
+    .card p { margin:0 0 10px; color:var(--muted); font-size:14px; }
+    .btn { display:inline-block; padding:8px 10px; border:1px solid var(--line); border-radius:8px; color:var(--text); text-decoration:none; background:#191a1d; font-size:14px; }
+    .btn:hover { border-color:#3a3d43; }
+  </style>
+</head>
+<body>
+
+  {% include 'includes/dev_header.html' %}
+
+  <div class="container">
+    <h2 style="margin:6px 0 12px;">Dashboard</h2>
+
+    <div class="cards">
+
+      <div class="card">
+        <h3>Albums</h3>
+        <p>Create Albums.</p>
+        <a class="btn" href="/albums">Open</a>
+      </div>
+
+
+      <div class="card">
+        <h3>Dev: DB Tables</h3>
+        <p>Snapshot of public schema as Markdown with copy-to-clipboard.</p>
+        <a class="btn" href="/dev/db_tables">Open</a>
+      </div>
+
+      <div class="card">
+        <h3>Dev: Routes</h3>
+        <p>Registered Flask routes with source and editable docs.</p>
+        <a class="btn" href="/dev/routes">Open</a>
+      </div>
+
+      <div class="card">
+        <h3>Player (index.html)</h3>
+        <p>Open the ThreeJS WebGL player.</p>
+        <a class="btn" href="/">Open</a>
+      </div>
+
+      <div class="card">
+        <h3>Profile</h3>
+        <p>Manage your account settings.</p>
+        <a class="btn" href="/profile">Open</a>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

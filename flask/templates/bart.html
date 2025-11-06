@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Access · studio333.art{% endblock %}
+
+{% block head %}
+<style>
+  :root{
+    --bg:#0b0b0c;--card:#121315;--text:#e7e7ea;--muted:#a3a3a8;--line:#2a2c30;--accent:#0a84ff;--accent-2:#3ea1ff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+  .container{max-width:none;padding:0}
+  .auth-wrap{min-height:100dvh;display:grid;place-items:center;padding:24px}
+  .card{width:100%;max-width:420px;background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 4px 30px rgba(0,0,0,.35)}
+  .card-in{padding:22px}
+  .brand{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+  .brand .dot{width:10px;height:10px;border-radius:50%;background:var(--accent)}
+  h1{margin:0;font-size:18px;letter-spacing:.2px}
+  p.sub{margin:4px 0 16px;color:var(--muted);font-size:13px}
+  form{display:grid;gap:12px}
+  label{font-size:12px;color:var(--muted)}
+  .input{margin-top:6px;display:flex;align-items:center;gap:8px;background:#0f1012;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+  .input input{all:unset;color:var(--text);font-size:14px;flex:1;min-width:0}
+  .input button.icon{all:unset;cursor:pointer;display:grid;place-items:center;width:28px;height:28px;border-radius:8px;border:1px solid var(--line)}
+  .input button.icon:focus{outline:2px solid var(--accent)}
+  .actions{display:flex;align-items:center;gap:10px;margin-top:8px}
+  .btn{all:unset;cursor:pointer;background:linear-gradient(180deg,var(--accent),var(--accent-2));color:#fff;padding:10px 14px;border-radius:10px;font-weight:600}
+  .btn:focus{outline:2px solid var(--accent)}
+  .muted{color:var(--muted);font-size:12px}
+  .alert{display:none;margin:0 0 10px;padding:10px 12px;border:1px solid #6e2a2a;background:#201415;color:#f2c0c0;border-radius:10px;font-size:13px}
+  .alert.show{display:block}
+  .row{display:grid;gap:6px}
+  .footer{margin-top:14px;display:flex;justify-content:space-between;align-items:center}
+  .link{color:#cfe3ff;text-decoration:none}
+  .link:hover{text-decoration:underline}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-wrap">
+  <div class="card" role="region" aria-label="Sign in">
+    <div class="card-in">
+      <div class="brand">
+        <span class="dot" aria-hidden="true"></span>
+        <h1>Access</h1>
+      </div>
+      <p class="sub">Sign in to continue.</p>
+
+      {% set msgs = get_flashed_messages() %}
+      <div class="alert{% if msgs and msgs|length %} show{% endif %}" id="msg">
+        {% if msgs and msgs|length %}{{ msgs[-1] }}{% endif %}
+      </div>
+
+
+
+      <form method="post" autocomplete="off">
+
+        <input type="hidden" name="timeout" value="0">
+
+
+        <div class="row">
+          <label for="email">Email</label>
+          <div class="input">
+            <input id="email" type="email" name="email" required placeholder="you@domain.tld" autocomplete="username">
+          </div>
+        </div>
+
+        <div class="row">
+          <label for="password">Password</label>
+          <div class="input">
+            <input id="password" type="password" name="password" required placeholder="••••••••" autocomplete="current-password">
+            <button class="icon" type="button" aria-label="Show password" title="Show/Hide" id="togglePw">
+              <!-- inline eye icon (no external asset) -->
+              <svg id="eyeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" stroke="#9aa3ad" stroke-width="1.5"/>
+                <circle cx="12" cy="12" r="3" stroke="#9aa3ad" stroke-width="1.5"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <input type="hidden" name="timeout" value="0">
+
+        <div class="actions">
+          <button class="btn" type="submit">Enter</button>
+          <span class="muted">Press Enter ↵</span>
+        </div>
+
+        <div class="footer">
+          <span class="muted">Forgot password? Contact admin.</span>
+          <a class="link" href="/">Back to Player</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Toggle password visibility; icon stays inline (no external requests)
+  (function(){
+    var btn = document.getElementById('togglePw');
+    if(!btn) return;
+    var input = document.getElementById('password');
+    var icon = document.getElementById('eyeIcon');
+    btn.addEventListener('click', function(){
+      var isPwd = input.getAttribute('type') === 'password';
+      input.setAttribute('type', isPwd ? 'text' : 'password');
+      // swap simple icon stroke to hint state
+      icon.querySelectorAll('path,circle').forEach(function(el){
+        el.setAttribute('stroke', isPwd ? '#ffffff' : '#9aa3ad');
+      });
+    });
+  })();
+</script>
+{% endblock %}

@@ -1,0 +1,362 @@
+[Nov  5 19:55]  .
+├── [Nov  4 23:02]  __pycache__
+│   └── [Nov  4 23:02]  app.cpython-314.pyc
+├── [Nov  5 04:45]  app.py
+├── [Nov  5 02:03]  backup-db-dev
+│   └── [Nov  5 02:03]  studio333_backup_20251105_020308.dump
+├── [Nov  5 02:05]  backup-local-db.sh
+├── [Nov  5 03:13]  deploy-app.sh
+├── [Nov  5 02:10]  deploy-local-db.sh
+├── [Nov  4 02:17]  deploy-static.sh
+├── [Nov  4 01:08]  gunicorn.conf.py
+├── [Nov  4 00:31]  media
+│   ├── [Oct 30 20:03]  archives
+│   │   ├── [Oct 29 00:08]  1
+│   │   │   └── [Oct 19  2017]  1-3-Hyenaz-vs-AKME-x-B333.mp3
+│   │   ├── [Oct 29 00:16]  2g
+│   │   │   ├── [May 25  2016]  2g --2009-06-24--001.mp3
+│   │   │   ├── [May 25  2016]  2g --2009-06-24--002.mp3
+│   │   │   ├── [May 25  2016]  2g audio blog 001.mp3
+│   │   │   ├── [May 25  2016]  2g audio blog 002.mp3
+│   │   │   ├── [May 25  2016]  2g audio blog 004B.mp3
+│   │   │   ├── [May 25  2016]  2g audio blog 005A.mp3
+│   │   │   ├── [May 25  2016]  2g audio blog 007A.mp3
+│   │   │   ├── [May 25  2016]  2g audio blog 009.mp3
+│   │   │   ├── [May 25  2016]  2g--20110821-01.mp3
+│   │   │   ├── [May 25  2016]  2g--20110821-02.mp3
+│   │   │   ├── [May 25  2016]  2g--20110821-03.mp3
+│   │   │   ├── [May 25  2016]  2g--20110821-04.mp3
+│   │   │   ├── [May 25  2016]  2g--20110821-05.mp3
+│   │   │   ├── [May 25  2016]  2g--20120513-01.mp3
+│   │   │   ├── [May 25  2016]  2g--2014-02_01.mp3
+│   │   │   ├── [May 25  2016]  2g--2014-02_02.mp3
+│   │   │   ├── [May 25  2016]  2g--2014-02_03.mp3
+│   │   │   ├── [May 25  2016]  2g--2014-02_04.mp3
+│   │   │   ├── [May 25  2016]  2g--2014-02_05.mp3
+│   │   │   ├── [May 25  2016]  2g--2014-02_06.mp3
+│   │   │   ├── [May 25  2016]  2g--The-Force--001.mp3
+│   │   │   ├── [May 25  2016]  2g--The-Force--002.mp3
+│   │   │   ├── [May 25  2016]  2g--The-Force--003.mp3
+│   │   │   ├── [May 25  2016]  2g--The-Force--004.mp3
+│   │   │   ├── [May 25  2016]  2g--The-Force--005.mp3
+│   │   │   ├── [May 25  2016]  2g--fuck-the-monetary-syetem--part2--2011-10-05--12min20.mp3
+│   │   │   ├── [May 25  2016]  2g--fuck-the-monetary-system--part2--2011-10-05--7m50.mp3
+│   │   │   ├── [May 25  2016]  2g--fuck-the-monetary-system--part2--2011-10-05--7min53.mp3
+│   │   │   ├── [May 25  2016]  2g--fuck-the-monetary-system--part2--2011-10-05--Kuzniak-Bijak-in-a-duet--2min54.mp3
+│   │   │   ├── [May 25  2016]  2g--hegotthenoze.mp3
+│   │   │   ├── [May 25  2016]  2g--music-for-cartoons-where-everybody-dies--live-at-csw--2011-06-01--001.mp3
+│   │   │   ├── [May 25  2016]  2g--music-for-cartoons-where-everybody-dies--live-at-csw--2011-06-01--002.mp3
+│   │   │   ├── [May 25  2016]  2g--music-for-cartoons-where-everybody-dies--live-at-csw--2011-06-01--003.mp3
+│   │   │   ├── [May 25  2016]  2g--music-for-cartoons-where-everybody-dies--live-at-csw--2011-06-01--004.mp3
+│   │   │   ├── [May 25  2016]  2g--music-for-cartoons-where-everybody-dies--live-at-csw--2011-06-01--005.mp3
+│   │   │   ├── [May 25  2016]  2g--shiver.mp3
+│   │   │   ├── [May 25  2016]  2g-2008-12-17--001.mp3
+│   │   │   ├── [May 25  2016]  2g-2008-12-17--002.mp3
+│   │   │   ├── [May 25  2016]  2g-2008-12-17--003.mp3
+│   │   │   ├── [May 25  2016]  2g-2008-12-17--004.mp3
+│   │   │   ├── [May 25  2016]  2g-2008-12-18--001.mp3
+│   │   │   ├── [May 25  2016]  2g-20130317-01.mp3
+│   │   │   ├── [May 25  2016]  2g-20130317-02.mp3
+│   │   │   ├── [May 25  2016]  2g-2013061801BNC4fs.mp3
+│   │   │   ├── [May 25  2016]  2g-2013061901BNC4fs.mp3
+│   │   │   ├── [May 25  2016]  2g-2013061903BNC4fs.mp3
+│   │   │   ├── [May 25  2016]  2g-as-zmu-001.mp3
+│   │   │   ├── [May 25  2016]  2g-as-zmu-002b.mp3
+│   │   │   ├── [May 25  2016]  2g-as-zmu-003.mp3
+│   │   │   ├── [May 25  2016]  2g-as-zmu-004.mp3
+│   │   │   ├── [May 25  2016]  2g-as-zmu-006a.mp3
+│   │   │   └── [May 25  2016]  2g-as-zmu-006b.mp3
+│   │   ├── [Oct 29 00:16]  3METRYzycieprywatne
+│   │   │   ├── [May 25  2016]  3METRYzycieprywatne#01.mp3
+│   │   │   ├── [May 25  2016]  3METRYzycieprywatne#02.mp3
+│   │   │   ├── [May 25  2016]  3METRYzycieprywatne#03.mp3
+│   │   │   └── [May 25  2016]  3METRYzycieprywatne#04.mp3
+│   │   ├── [Oct 29 00:08]  3Metry
+│   │   │   ├── [May 25  2016]  3Metry-noir-#01-noir.mp3
+│   │   │   ├── [May 25  2016]  3Metry-noir-#02-poniedzialek.mp3
+│   │   │   ├── [May 25  2016]  3Metry-noir-#03-short-free.mp3
+│   │   │   ├── [May 25  2016]  3Metry-noir-#04-moonminth.mp3
+│   │   │   ├── [May 25  2016]  3Metry-noir-#05-blue-7.mp3
+│   │   │   ├── [May 25  2016]  3Metry-noir-#06-nightshot.mp3
+│   │   │   ├── [May 25  2016]  3Metry-noir-#07-Naima.mp3
+│   │   │   ├── [May 25  2016]  3Metry-noir-#08-nefrolepis.mp3
+│   │   │   └── [May 25  2016]  3Metry-noir-#09-taxi-trip.mp3
+│   │   ├── [Oct 29 00:16]  AKME
+│   │   │   ├── [Oct 19  2017]  AKME_x_B333__Morph__downsampled.mp3
+│   │   │   ├── [Oct 19  2017]  AKME_x_B333__New_Beginning__downsampled.mp3
+│   │   │   ├── [Oct 19  2017]  AKME_x_B333_feat_Afrika_Brown__All_Day_Everyday__shorteredIntro__downsampled.mp3
+│   │   │   └── [Oct 19  2017]  AKME_x_B333_feat_Afrika_Brown__We_Are_One__downsampled-.mp3
+│   │   ├── [Oct 29 00:08]  AT
+│   │   │   └── [Dec 31  2022]  AT-BK-Both-and-Neither-s32-bnc-Pre-Master-32b192k.mp3
+│   │   ├── [Oct 29 00:08]  AtrociousFilth
+│   │   │   ├── [Jan 13  2021]  AtrociousFilth-OVV-01-F.mp3
+│   │   │   ├── [Jan 13  2021]  AtrociousFilth-OVV-02-N.mp3
+│   │   │   ├── [Jan 13  2021]  AtrociousFilth-OVV-03-L.mp3
+│   │   │   ├── [Jan 13  2021]  AtrociousFilth-OVV-04-T.mp3
+│   │   │   ├── [Jan 13  2021]  AtrociousFilth-OVV-05-D.mp3
+│   │   │   ├── [Jan 13  2021]  AtrociousFilth-OVV-06-A.mp3
+│   │   │   └── [Jan 13  2021]  AtrociousFilth-OVV-07-O.mp3
+│   │   ├── [Oct 29 00:08]  B333
+│   │   │   ├── [Jan  2  2023]  B333-Kalimera-Kalispera-Kalinichta-Pavlo-2022.09.30-s46-2023-01-02-1511-premaster.mp3
+│   │   │   └── [Oct 28 23:39]  B333-video-for-Kuzniak-Mahmoud--unfinished-work-in-progress.mp4
+│   │   ├── [Oct 29 00:08]  BK
+│   │   │   └── [Oct 10  2023]  BK-Creatan-Soundscapes_231001_0010-Chania_Old_Port_Atmosphere_Walk.mp3
+│   │   ├── [Oct 29 00:16]  BQ3
+│   │   │   ├── [May 25  2016]  BQ3#01.mp3
+│   │   │   ├── [May 25  2016]  BQ3#02.mp3
+│   │   │   ├── [May 25  2016]  BQ3#03.mp3
+│   │   │   ├── [May 25  2016]  BQ3#04.mp3
+│   │   │   ├── [May 25  2016]  BQ3#05.mp3
+│   │   │   ├── [May 25  2016]  BQ3#06.mp3
+│   │   │   ├── [May 25  2016]  BQ3#07.mp3
+│   │   │   ├── [May 25  2016]  BQ3#08.mp3
+│   │   │   ├── [May 25  2016]  BQ3#09.mp3
+│   │   │   ├── [May 25  2016]  BQ3#10.mp3
+│   │   │   ├── [May 25  2016]  BQ3#11.mp3
+│   │   │   ├── [May 25  2016]  BQ3#12.mp3
+│   │   │   ├── [May 25  2016]  BQ3#13.mp3
+│   │   │   ├── [May 25  2016]  BQ3#14.mp3
+│   │   │   ├── [May 25  2016]  BQ3#15.mp3
+│   │   │   └── [May 25  2016]  BQ3#16.mp3
+│   │   ├── [Oct 29 00:08]  Bartlomiej
+│   │   │   ├── [May 25  2016]  Bartlomiej-Kuzniak--bassdrivenselfcomposingstructuresolo.mp3
+│   │   │   ├── [May 25  2016]  Bartlomiej-Kuzniak--digital-solo.mp3
+│   │   │   ├── [May 25  2016]  Bartlomiej-Kuzniak--sentimental-UFO--loop.mp3
+│   │   │   └── [Nov 30  2021]  Bartlomiej-Kuzniak-and-Thomas-Mahmoud.mp3
+│   │   ├── [Oct 29 00:08]  Biotektor
+│   │   │   ├── [Dec 15  2022]  Biotektor-01-B333-Biotektor_In.mp3
+│   │   │   ├── [Dec 15  2022]  Biotektor-02-Tomasz_Bot-Biotektor.mp3
+│   │   │   ├── [Dec 15  2022]  Biotektor-03-B333_feat_Afrika_Brown_x_Frank_Parker-Biotektor_Out.mp3
+│   │   │   ├── [Dec 15  2022]  Biotektor-04-B333_x_Tomasz_Bot-SoundInstallationTeaser.mp3
+│   │   │   ├── [Dec 15  2022]  Biotektor-05-Tomasz_Bot-Creditsy.mp3
+│   │   │   └── [Dec 15  2022]  Biotektor-06-Tomasz_Bot-Licencja.mp3
+│   │   ├── [Oct 29 00:08]  Bluthner
+│   │   │   └── [Oct 28 23:37]  Bluthner-video-wide.mp4
+│   │   ├── [Oct 29 00:16]  Cretan
+│   │   │   ├── [Oct 16  2023]  Cretan-Soundscape-Agia-Lake.mp3
+│   │   │   ├── [Oct 19  2023]  Cretan-Soundscape-Cicadas-Atmosphere-of-Creatan-Village-Kato-Stalos.mp3
+│   │   │   ├── [Oct 13  2023]  Cretan-Soundscape-Gerani.mp3
+│   │   │   ├── [Oct 19  2023]  Cretan-Soundscape-Kato-Stalos-01.mp3
+│   │   │   ├── [Oct 12  2023]  Cretan-Soundscape-Kedrodasos-Alien-ghosts-in-the-wind.mp3
+│   │   │   ├── [Nov  8  2023]  Cretan-Soundscape-Paleochora-Stoney-Beach-no-people-no-cars.mp3
+│   │   │   ├── [Oct 12  2023]  Cretan-Soundscape-Perspective-from-the-water-microphones-facing-the-sunset-Platanias.mp3
+│   │   │   ├── [Oct 13  2023]  Cretan-Soundscape-Stream-in-the-Valley-Prasses.mp3
+│   │   │   ├── [Nov 10  2023]  Cretan-Soundscape-Village-Kato-Stalos-01-Birds-and-Sheeps-car-and-sea-lo-ruble-removed.mp3
+│   │   │   ├── [Nov 10  2023]  Cretan-Soundscape-Village-Kato-Stalos-01-Birds-and-Sheeps.mp3
+│   │   │   ├── [Oct 17  2023]  Cretan-Soundscape-Volcanic-Pools.mp3
+│   │   │   ├── [Oct 11  2023]  Cretan-Soundscapes-231001_0018-A-night-on-a-mountain-road-in-the-interior_1of2-.mp3
+│   │   │   ├── [Oct 11  2023]  Cretan-Soundscapes-231001_0019-A-night-on-a-mountain-road-in-the-interior_2of2-.mp3
+│   │   │   ├── [Nov 15  2023]  Cretan-Soundscapes-A-night-on-a-mountain-road-in-the-interior.mp3
+│   │   │   ├── [Oct 18  2023]  Cretan-Soundscapes-Fool-Moon-Taverna-Platanias.mp3
+│   │   │   ├── [Oct 11  2023]  Cretan-Soundscapes-Paleochora-Stoney-Beach-231001_0006RXed-mastered-32b96k.mp3
+│   │   │   ├── [Nov  8  2023]  Cretan_Soundscape-Platanias-perspective_from_the_water-sunset_v2.mp3
+│   │   │   └── [Oct  9  2023]  Cretan_Soundscapes_BK_Agioi_Apostolis-Family_Beach_231001_0010-mastered-32b96k-no-Dither.mp3
+│   │   ├── [Oct 29 00:16]  G9
+│   │   │   ├── [May 25  2016]  G9#001.mp3
+│   │   │   ├── [May 25  2016]  G9#002.mp3
+│   │   │   ├── [May 25  2016]  G9#003.mp3
+│   │   │   ├── [May 25  2016]  G9#005s2.mp3
+│   │   │   └── [May 25  2016]  G9#006s2.mp3
+│   │   ├── [Oct 29 00:08]  Goshka
+│   │   │   └── [May 25  2016]  Goshka-Banka--Poswiatowska--Et-m_en-aller.mp3
+│   │   ├── [Oct 29 00:44]  Jiku_Kuzniak
+│   │   │   └── [May 25  2016]  JikuKuzniak20130811mastered.mp3
+│   │   ├── [Oct 29 00:16]  KGQtrio
+│   │   │   └── [May 25  2016]  KGQtrio#05.mp3
+│   │   ├── [Oct 29 00:45]  KK
+│   │   │   ├── [May 25  2016]  KK20130528-2x2x2-wersjarobocza.mp3
+│   │   │   ├── [May 25  2016]  KK20130528-utw1-wersjarobocza.mp3
+│   │   │   ├── [May 25  2016]  KK20130528-zcytra-wersjarobocza.mp3
+│   │   │   ├── [May 25  2016]  KK20130528-zdeszczem-wersjarobocza.mp3
+│   │   │   ├── [May 25  2016]  KK20130608-01.mp3
+│   │   │   └── [May 25  2016]  KK20130609.mp3
+│   │   ├── [Oct 29 00:24]  Kuzniak-Kosiarkiewicz
+│   │   │   ├── [May 25  2016]  Kuzniak-Kosiarkiewicz--early-spring.mp3
+│   │   │   ├── [May 25  2016]  Kuzniak-Kosiarkiewicz--performance-at-Bajkonur-on-the-Night-of-333flow-dot-com.mp3
+│   │   │   ├── [May 25  2016]  Kuzniak-Kosiarkiewicz--performance-at-Corpo6-Berlin.mp3
+│   │   │   ├── [May 25  2016]  Kuzniak-Kosiarkiewicz--we-dont-know-but-we-go.mp3
+│   │   │   ├── [May 25  2016]  KuzniakKosiarkiewicz--2013-12-01-Opening.mp3
+│   │   │   └── [May 25  2016]  KuzniakKosiarkiewicz--eccentric_oscillations_for_two_sub-contra-baritone-saxophones_and_two contra-soprano-saxophones.mp3
+│   │   ├── [Oct 29 00:23]  Kuzniak-Teicher
+│   │   │   ├── [Apr  4  2023]  01-Kuzniak-Teicher-Both-Neither-Hope.mp3
+│   │   │   ├── [Apr  4  2023]  02-Kuzniak-Teicher-Ocean-Hope.mp3
+│   │   │   ├── [Apr  4  2023]  03-Kuzniak-Teicher-My-body-is-not-my-own-Hope.mp3
+│   │   │   └── [Apr  4  2023]  04-Kuzniak-Teicher-Hope-Hope.mp3
+│   │   ├── [Oct 29 00:17]  Kuzniak_Mahmoud
+│   │   │   ├── [Oct 24  2022]  Kuzniak_Mahmoud-Never_Never-01-Never_Never.mp3
+│   │   │   ├── [Oct 24  2022]  Kuzniak_Mahmoud-Never_Never-02-Misleads.mp3
+│   │   │   ├── [Oct 24  2022]  Kuzniak_Mahmoud-Never_Never-03-Crypto_is_killing_my_passion.mp3
+│   │   │   ├── [Oct 24  2022]  Kuzniak_Mahmoud-Never_Never-04-360_Degree_of_Discharge.mp3
+│   │   │   ├── [Oct 24  2022]  Kuzniak_Mahmoud-Never_Never-05-Pak_Choi_Recovery_Program.mp3
+│   │   │   └── [Oct 24  2022]  Kuzniak_Mahmoud-Never_Never-06-Recovered.mp3
+│   │   ├── [Oct 29 00:16]  Mahmoud
+│   │   │   └── [Oct 28 23:37]  Mahmoud_Kuzniak_teaser_1080p.mp4
+│   │   ├── [Oct 29 00:08]  Nonstate
+│   │   │   ├── [May 25  2016]  Nonstate--Positive-Choices--001.mp3
+│   │   │   ├── [May 25  2016]  Nonstate--Positive-Choices--002.mp3
+│   │   │   ├── [May 25  2016]  Nonstate--Positive-Choices--003.mp3
+│   │   │   ├── [May 25  2016]  Nonstate--Positive-Choices--004.mp3
+│   │   │   ├── [May 25  2016]  Nonstate--Positive-Choices--005.mp3
+│   │   │   ├── [May 25  2016]  Nonstate--Positive-Choices--006.mp3
+│   │   │   ├── [May 25  2016]  Nonstate--Positive-Choices--007.mp3
+│   │   │   ├── [May 25  2016]  Nonstate--Positive-Choices--008.mp3
+│   │   │   ├── [May 25  2016]  Nonstate--Positive-Choices--009.mp3
+│   │   │   ├── [May 25  2016]  Nonstate--Positive-Choices--010.mp3
+│   │   │   ├── [May 25  2016]  Nonstate--Positive-Choices--011.mp3
+│   │   │   ├── [May 25  2016]  Nonstate--Positive-Choices--012--AChants.mp3
+│   │   │   ├── [May 25  2016]  Nonstate--Positive-Choices--013.mp3
+│   │   │   ├── [May 25  2016]  Nonstate--Positive-Choices--014.mp3
+│   │   │   ├── [May 25  2016]  Nonstate--Positive-Choices--015.mp3
+│   │   │   ├── [May 25  2016]  Nonstate--Positive-Choices--016--XXXmeSSS.mp3
+│   │   │   ├── [May 25  2016]  Nonstate--chortle-of-cracking-cells--mp3-320kbps.mp3
+│   │   │   └── [May 25  2016]  Nonstate-XXXmeSSS.mp3
+│   │   ├── [Oct 29 00:08]  QGGQ
+│   │   │   ├── [May 25  2016]  QGGQ--foundry.mp3
+│   │   │   ├── [May 25  2016]  QGGQ--z1.mp3
+│   │   │   └── [May 25  2016]  QGGQ--z2.mp3
+│   │   ├── [Oct 29 00:08]  QKS
+│   │   │   ├── [May 25  2016]  QKS--spirit-#01.mp3
+│   │   │   ├── [May 25  2016]  QKS--spirit-#02.mp3
+│   │   │   ├── [May 25  2016]  QKS--spirit-#03.mp3
+│   │   │   ├── [May 25  2016]  QKS--spirit-#04.mp3
+│   │   │   ├── [May 25  2016]  QKS--spirit-#05.mp3
+│   │   │   ├── [May 25  2016]  QKS--spirit-#06.mp3
+│   │   │   ├── [May 25  2016]  QKS--spirit-#07.mp3
+│   │   │   ├── [May 25  2016]  QKS--spirit-#08.mp3
+│   │   │   ├── [May 25  2016]  QKS--spirit-#09.mp3
+│   │   │   └── [May 25  2016]  QKS--spirit-#10.mp3
+│   │   ├── [Oct 29 00:08]  Quntum
+│   │   │   └── [May 25  2016]  Quntum-Vacuum-Oscillator--#001.mp3
+│   │   ├── [Oct 29 00:08]  Reconstructed
+│   │   │   └── [Mar  8  2023]  Reconstructed-Interview-Bartlomiej-Kuzniak-Studio-333-Spectral-Services.mp3
+│   │   ├── [Oct 29 00:08]  Source
+│   │   │   ├── [Mar  8  2023]  Source-1-Original-Main-Audio-Original.mp3
+│   │   │   └── [Mar  8  2023]  Source-2-Audio-from-Distant-Camera.mp3
+│   │   ├── [Oct 29 00:16]  Sub
+│   │   │   ├── [May 25  2016]  Sub Spa 001.mp3
+│   │   │   ├── [May 25  2016]  Sub Spa 002.mp3
+│   │   │   ├── [May 25  2016]  Sub Spa 003.mp3
+│   │   │   ├── [May 25  2016]  Sub Spa 004.mp3
+│   │   │   ├── [May 25  2016]  Sub Spa 005.mp3
+│   │   │   ├── [May 25  2016]  Sub Spa 006.mp3
+│   │   │   ├── [May 25  2016]  Sub Spa 007.mp3
+│   │   │   ├── [May 25  2016]  Sub Spa 008.mp3
+│   │   │   ├── [May 25  2016]  Sub Spa 009.mp3
+│   │   │   └── [May 25  2016]  Sub Spa 010.mp3
+│   │   ├── [Oct 30 20:03]  audioteka.txt
+│   │   ├── [Oct 29 00:16]  bcd
+│   │   │   ├── [May 25  2016]  bcd#01.mp3
+│   │   │   ├── [May 25  2016]  bcd#02.mp3
+│   │   │   ├── [May 25  2016]  bcd#03.mp3
+│   │   │   ├── [May 25  2016]  bcd#04.mp3
+│   │   │   ├── [May 25  2016]  bcd#05.mp3
+│   │   │   ├── [May 25  2016]  bcd#06.mp3
+│   │   │   ├── [May 25  2016]  bcd#07.mp3
+│   │   │   └── [May 25  2016]  bcd#09.mp3
+│   │   ├── [Oct 29 00:08]  dwaGramy
+│   │   │   ├── [May 25  2016]  dwaGramy-cysta.mp3
+│   │   │   ├── [May 25  2016]  dwaGramy-exp1.mp3
+│   │   │   ├── [May 25  2016]  dwaGramy-exp2.mp3
+│   │   │   ├── [May 25  2016]  dwaGramy-ostntt.mp3
+│   │   │   ├── [May 25  2016]  dwaGramy-polgodziny.mp3
+│   │   │   ├── [May 25  2016]  dwaGramy-poszposzlo.mp3
+│   │   │   ├── [May 25  2016]  dwaGramy-roog.mp3
+│   │   │   ├── [May 25  2016]  dwaGramy-szarp.mp3
+│   │   │   └── [May 25  2016]  dwaGramy-triubutetonapalm.mp3
+│   │   ├── [Oct 29 00:08]  eneno724
+│   │   │   └── [May 25  2016]  eneno724-001--mp3-320kbps.mp3
+│   │   └── [Oct 29 00:08]  umwelt333
+│   │       ├── [May 25  2016]  umwelt333-eviljazz-c01.mp3
+│   │       ├── [May 25  2016]  umwelt333-eviljazz-c03.mp3
+│   │       ├── [May 25  2016]  umwelt333-eviljazz-c04a.mp3
+│   │       ├── [May 25  2016]  umwelt333-eviljazz-c06.mp3
+│   │       ├── [May 25  2016]  umwelt333-eviljazz-r00b.mp3
+│   │       ├── [May 25  2016]  umwelt333-eviljazz-r01.mp3
+│   │       ├── [May 25  2016]  umwelt333-eviljazz-r02.mp3
+│   │       ├── [May 25  2016]  umwelt333-eviljazz-r03b.mp3
+│   │       ├── [May 25  2016]  umwelt333-eviljazz-r04.mp3
+│   │       ├── [May 25  2016]  umwelt333-eviljazz-r05.mp3
+│   │       └── [May 25  2016]  umwelt333-eviljazz-r06.mp3
+│   ├── [Oct 29 23:30]  favicon.ico
+│   ├── [Oct 31 12:27]  fonts
+│   │   ├── [Oct  8  2018]  Bad Signal.otf
+│   │   ├── [Oct 31 02:06]  Bad Signal.woff
+│   │   ├── [Aug 21  2015]  Disco Nectar.ttf
+│   │   ├── [Oct 31 02:06]  Disco Nectar.woff
+│   │   ├── [Dec 31  1998]  ERTHQAKE.TTF
+│   │   ├── [Feb 11  2024]  Hacked-KerX.ttf
+│   │   ├── [Oct 31 02:06]  Hacked-KerX.woff
+│   │   ├── [Jul 30  2015]  MUSICNET.ttf
+│   │   ├── [Oct 31 02:06]  MUSICNET.woff
+│   │   ├── [Dec 31  2024]  Nebula-Hollow.otf
+│   │   ├── [Oct 31 02:06]  Nebula-Hollow.woff
+│   │   ├── [Dec 31  2024]  Nebula-Regular.otf
+│   │   ├── [Oct 31 02:06]  Nebula-Regular.woff
+│   │   ├── [Nov 19  2013]  advanced_dot_digital-7.ttf
+│   │   ├── [Oct 31 02:06]  advanced_dot_digital-7.woff
+│   │   ├── [Jun  9  2013]  calc.ttf
+│   │   ├── [Oct 31 02:06]  calc.woff
+│   │   ├── [Dec 14  2017]  digital dark system.ttf
+│   │   ├── [Oct 31 02:06]  digital dark system.woff
+│   │   ├── [Oct 31 12:51]  index.html
+│   │   ├── [Apr 27  2012]  lcddot_tr.ttf
+│   │   ├── [Oct 31 02:06]  lcddot_tr.woff
+│   │   ├── [May 23  2019]  led.ttf
+│   │   ├── [Oct 31 02:06]  led.woff
+│   │   ├── [Dec 31  2024]  myo.ttf
+│   │   ├── [Oct 29 12:16]  myo.woff
+│   │   ├── [Oct 16  2012]  the_vandor_spot.ttf
+│   │   ├── [Oct 31 02:06]  the_vandor_spot.woff
+│   │   ├── [Oct 11  2011]  unknown.ttf
+│   │   └── [Oct 31 02:06]  unknown.woff
+│   └── [Nov  2 18:38]  icons
+│       ├── [Oct 31 13:58]  audio.svg
+│       ├── [Oct 31 13:58]  clear.svg
+│       ├── [Nov  1 13:15]  close.svg
+│       ├── [Oct 31 13:58]  image.svg
+│       ├── [Nov  2 18:37]  loop.svg
+│       ├── [Nov  1 13:27]  moon.svg
+│       ├── [Oct 31 13:58]  next.svg
+│       ├── [Oct 31 13:58]  play.svg
+│       ├── [Oct 31 13:58]  prev.svg
+│       ├── [Oct 31 13:58]  reset.svg
+│       ├── [Oct 31 13:58]  settings.svg
+│       ├── [Nov  1 13:27]  sun.svg
+│       ├── [Oct 31 13:58]  video.svg
+│       ├── [Oct 31 13:58]  webcam.svg
+│       └── [Nov  1 13:14]  x.svg
+├── [Nov  5 03:06]  remote_restart.sh
+├── [Nov  5 02:54]  requirements.txt
+├── [Nov  5 01:30]  static
+│   ├── [Nov  5 01:30]  avatars
+│   │   └── [Nov  5 01:30]  tata_caad53d2ef954897b41e91c42bc1a616.jpg
+│   ├── [Nov  5 03:55]  css
+│   │   ├── [Nov  5 03:55]  albums.css
+│   │   └── [Nov  4 00:18]  player.css
+│   ├── [Nov  5 03:44]  js
+│   │   ├── [Nov  5 04:44]  albums.js
+│   │   ├── [Nov  4 01:14]  player1.js
+│   │   ├── [Nov  4 00:45]  player1.min.js
+│   │   └── [Nov  4 00:45]  player1.min.obf.js
+│   └── [Nov  4 01:12]  presets
+│       └── [Nov  2 18:32]  default.json
+├── [Nov  5 02:06]  studio333_local_20251105_020625.dump
+├── [Nov  5 03:44]  templates
+│   ├── [Nov  4 23:48]  admin
+│   │   └── [Nov  5 00:50]  admin_routes.html
+│   ├── [Nov  5 04:44]  albums.html
+│   ├── [Nov  5 01:40]  bart.html
+│   ├── [Nov  4 00:09]  base.html
+│   ├── [Nov  5 04:06]  dashboard.html
+│   ├── [Nov  5 00:55]  dev
+│   │   ├── [Nov  5 01:22]  db_tables.html
+│   │   └── [Nov  5 00:55]  index.html
+│   ├── [Nov  5 01:29]  edit_profile.html
+│   ├── [Nov  5 01:26]  includes
+│   │   ├── [Nov  5 01:26]  analytics.html
+│   │   └── [Nov  5 01:21]  dev_header.html
+│   ├── [Nov  4 02:25]  index.html
+│   └── [Oct 31 14:31]  puzzle.html
+└── [Nov  5 19:55]  tree.txt
+
+50 directories, 310 files
