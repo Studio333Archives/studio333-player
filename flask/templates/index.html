@@ -11,7 +11,8 @@
     "imports": {
       "three": "https://unpkg.com/three@0.180.0/build/three.module.js",
       "three/addons/": "https://unpkg.com/three@0.180.0/examples/jsm/",
-      "lil-gui": "https://cdn.jsdelivr.net/npm/lil-gui@0.18/dist/lil-gui.esm.min.js"
+      "lil-gui": "{{ url_for('static', filename='js/vendor/lil-gui/lil-gui.esm.min.js') }}",
+      "sortablejs": "{{ url_for('static', filename='js/vendor/sortable.complete.esm.js') }}"
     }
   }
 </script>
@@ -260,10 +261,10 @@ data-tree="{{ url_for('media', filename='archives/audioteka.txt') }}">
         <h3 id="aePickerTitle">Add tracks</h3>
         <div class="ae-picker-actions">
           <input id="aeSearch" type="text" placeholder="Search library…">
-          <button id="aePickerClose" type="button">Close</button>
         </div>
       </div>
       <ul id="aeResults" class="ae-results"></ul>
+      <button id="aePickerClose" type="button">Close</button>
     </div>
   </div>
 </div>

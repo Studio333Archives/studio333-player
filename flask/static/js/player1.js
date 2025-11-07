@@ -4257,6 +4257,8 @@ document.addEventListener('keydown', (e)=>{
 })();
 
 
+
+
 // Albums UI: render grid, create-first tile, empty state placeholders
 (() => {
   const qs  = (s, r=document) => r.querySelector(s);
@@ -4360,1717 +4362,24 @@ document.addEventListener('keydown', (e)=>{
 
 
 
-// // Album Editor: picker + tracks + save + player interop (sanitized paths, no 404 loops, verbose logs)
-// (() => {
-//   const qs=(s,r=document)=>r.querySelector(s); const qsa=(s,r=document)=>Array.from(r.querySelectorAll(s));
-//   const editor = qs('#albumEditor'); if(!editor) return;
-
-//   const appDiv = qs('#app');
-//   const BASE = (appDiv?.dataset.base || 'media/archives').replace(/\/+$/,'');
-//   const LOG = (...a)=>console.log('[AlbumEditor]', ...a);
-//   const WARN = (...a)=>console.warn('[AlbumEditor]', ...a);
-//   const ERR = (...a)=>console.error('[AlbumEditor]', ...a);
-
-//   // DOM
-//   const form = qs('#albumEditorForm', editor);
-//   const panel = qs('.help-panel', editor);
-//   const closeBtn = qs('#albumEditorClose', editor);
-//   const coverImg = qs('#aeCoverImg', editor);
-//   const coverUrl = qs('#aeCoverUrl', editor);
-//   const coverFile= qs('#aeCoverFile', editor);
-//   const aeId     = qs('#aeId', editor);
-//   const aeTitle  = qs('#aeTitle', editor);
-//   const aeDesc   = qs('#aeDesc', editor);
-//   const aeVis    = qs('#aeVisibility', editor);
-//   const infoToggle = qs('#aeInfoToggle', editor);
-
-//   const tracksBox = qs('#aeTracks', editor);
-//   const addTracksBtn = qs('#aeAddTracks', editor);
-
-//   const picker = qs('#aePicker', editor);
-//   const search = qs('#aeSearch', editor);
-//   const results= qs('#aeResults', editor);
-//   const pickClose= qs('#aePickerClose', editor);
-
-//   const albumsRoot = qs('#acctAlbums');
-
-//   // HTTP
-//   const api = async (path, opts={})=>{
-//     const o = Object.assign({ credentials:'same-origin' }, opts);
-//     const res = await fetch(path, o);
-//     const ct = res.headers.get('content-type')||'';
-//     const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
-//     if(!res.ok) throw Object.assign(new Error('HTTP '+res.status), {status:res.status, data});
-//     return data;
-//   };
-
-//   // Utils
-//   function open(el){ el.classList.remove('hidden'); }
-//   function close(el){ el.classList.add('hidden'); }
-//   function setCover(src){ coverImg.src = src || ''; }
-//   function encodePath(p){ return p.split('/').map(encodeURIComponent).join('/'); }
-//   function resolveUrl(u){ try{ return new URL(u, location.href).href; }catch{ return u; } }
-//   function buildUrl(rel){ return `${BASE}/${encodePath(rel)}`; }
-//   function hasMediaExt(p){
-//     const ext = (p.split('.').pop()||'').toLowerCase();
-//     return ['mp3','wav','ogg','m4a','flac','aac','mp4','webm','ogv','mov','m4v','m3u8','mpd','jpg','jpeg','png','gif','webp','bmp'].includes(ext);
-//   }
-//   function sanitizePath(raw){
-//     if (!raw) return '';
-//     let s = String(raw)
-//       .replace(/^[\s\u2500-\u257F|>]+/g,'')
-//       .replace(/^(├─*|└─*|─+|┌─*|│)+\s*/g,'')
-//       .replace(/\s{2,}/g,' ')
-//       .trim();
-//     if (s.endsWith('/')) return '';
-//     return s;
-//   }
-//   function mediaTypeFromExt(path){
-//     const ext = (path.split('.').pop()||'').toLowerCase();
-//     if (['mp3','wav','ogg','m4a','flac','aac'].includes(ext)) return 'audio';
-//     if (['mp4','webm','ogv','mov','m4v'].includes(ext))       return 'video';
-//     if (['jpg','jpeg','png','gif','webp','bmp'].includes(ext)) return 'image';
-//     if (ext === 'm3u8') return 'hls';
-//     if (ext === 'mpd')  return 'dash';
-//     return 'audio';
-//   }
-
-//   // Library
-//   const libState = { ready:false, items:[], filtered:[] };
-//   async function ensureLibrary(){
-//     if (libState.ready) return libState.items;
-//     const url = appDiv?.dataset.tree;
-//     if (!url) { libState.ready=true; libState.items=[]; return libState.items; }
-//     const text = await fetch(url, { credentials:'same-origin', cache:'no-store' }).then(r=>r.text());
-//     let files = [];
-//     if (typeof parseTreeToFiles === 'function') {
-//       files = parseTreeToFiles(text);
-//     } else {
-//       files = text.split(/\r?\n/).map(s=>sanitizePath(s)).filter(Boolean).filter(hasMediaExt);
-//     }
-//     libState.items = files.map(p=>({ path:p, label:(p.split('/').pop()||p) }));
-//     libState.ready = true;
-//     LOG('library loaded', libState.items.length, 'items');
-//     return libState.items;
-//   }
-
-//   // State
-//   const state = {
-//     tracks: [],          // [{label, path}]
-//     current: null,
-//     dirty: false,
-//     playingUrl: null
-//   };
-//   function markDirty(){ state.dirty = true; }
-
-//   // Dirty guard
-//   ['input','change','keyup','paste'].forEach(ev=>{
-//     form.addEventListener(ev, (e)=>{
-//       if (e.target && (e.target.closest('#albumEditorForm') || e.target.closest('#aePicker'))) markDirty();
-//     }, { passive:true });
-//   });
-//   window.addEventListener('beforeunload', (e)=>{
-//     if (state.dirty){ e.preventDefault(); e.returnValue=''; }
-//   });
-//   function requestClose(){
-//     if (!state.dirty) { close(editor); return; }
-//     if (window.confirm('Discard unsaved changes?')){ state.dirty=false; close(editor); }
-//   }
-//   closeBtn.addEventListener('click', requestClose, { passive:true });
-//   editor.addEventListener('click', (e)=>{ if (e.target===editor) requestClose(); }, { passive:true });
-//   editor.addEventListener('keydown', (e)=>{ if (e.key==='Escape'){ e.stopPropagation(); requestClose(); } }, { passive:false });
-
-//   // Tracks render
-//   function renderTracks(list){
-//     tracksBox.innerHTML = '';
-//     list.forEach((t,idx)=>{
-//       const rel = sanitizePath(t.path);
-//       if (!rel) return;
-//       const url = buildUrl(rel);
-//       const isPlaying = (state.playingUrl && resolveUrl(state.playingUrl) === resolveUrl(url));
-
-//       const li = document.createElement('div');
-//       li.className = 'ae-track'; li.draggable = true;
-//       li.dataset.idx = String(idx);
-//       li.dataset.path = rel;
-
-//       li.innerHTML = `
-//         <div class="grip">⋮⋮</div>
-//         <div class="title" title="${t.label}">${String(idx+1).padStart(2,'0')}. ${t.label}</div>
-//         <div class="ae-row-actions">
-//           <button class="play" type="button">${isPlaying ? 'PLAYING' : 'Play'}</button>
-//           <button class="rm" type="button">Remove</button>
-//         </div>
-//       `;
-//       tracksBox.appendChild(li);
-//     });
-//     bindDnD(); bindTrackRowActions();
-//   }
-
-//   // Track row actions
-//   function bindTrackRowActions(){
-//     qsa('.ae-track', tracksBox).forEach(li=>{
-//       const idx = Number(li.dataset.idx);
-//       const rel = String(li.dataset.path||'');
-//       const url = buildUrl(rel);
-//       const playBtn = li.querySelector('.play');
-//       const rmBtn   = li.querySelector('.rm');
-
-//       playBtn.addEventListener('click', async (e)=>{
-//         e.stopPropagation();
-//         await playUrl(url, { origin:'tracks', idx });
-//         refreshPlayingUI();
-//       }, { passive:false });
-
-//       rmBtn.addEventListener('click', ()=>{
-//         state.tracks.splice(idx,1);
-//         markDirty();
-//         renderTracks(state.tracks);
-//       }, { passive:true });
-//     });
-//   }
-
-//   // DnD
-//   function bindDnD(){
-//     let src=null;
-//     tracksBox.addEventListener('dragstart',e=>{
-//       const li = e.target.closest('.ae-track'); if(!li) return;
-//       src = Number(li.dataset.idx); e.dataTransfer.effectAllowed='move';
-//     });
-//     tracksBox.addEventListener('dragover',e=>{
-//       if(src==null) return; e.preventDefault(); e.dataTransfer.dropEffect='move';
-//     });
-//     tracksBox.addEventListener('drop',e=>{
-//       if(src==null) return; e.preventDefault();
-//       const li = e.target.closest('.ae-track'); if(!li) return;
-//       const dst = Number(li.dataset.idx);
-//       if (dst===src) { src=null; return; }
-//       const item = state.tracks.splice(src,1)[0];
-//       state.tracks.splice(dst,0,item);
-//       src=null; markDirty(); renderTracks(state.tracks);
-//     });
-//     tracksBox.addEventListener('dragend',()=>{ src=null; });
-//   }
-
-//   // Picker
-//   function openPicker(){ open(picker); search.value=''; renderResults(libState.items); search.focus(); }
-//   function closePicker(){ close(picker); }
-
-//   function isInTracks(rel){ return state.tracks.some(t => sanitizePath(t.path) === sanitizePath(rel)); }
-
-//   function renderResults(list){
-//     results.innerHTML = '';
-//     list.forEach((it)=>{
-//       const rel = sanitizePath(it.path);
-//       if (!rel || !hasMediaExt(rel)) return;
-
-//       const url = buildUrl(rel);
-//       const isDup = isInTracks(rel);
-//       const isPlaying = (state.playingUrl && resolveUrl(state.playingUrl) === resolveUrl(url));
-
-//       const li = document.createElement('li');
-//       li.dataset.path = rel;
-//       if (isPlaying) li.classList.add('is-playing');
-//       li.innerHTML = `
-//         <div class="title" title="${rel}">${it.label}</div>
-//         <div class="ae-row-actions">
-//           <button class="play" type="button">${isPlaying ? 'PLAYING' : 'Play'}</button>
-//           <button class="add" type="button" ${isDup ? 'disabled' : ''}>${isDup ? 'ADDED' : 'ADD'}</button>
-//         </div>
-//       `;
-
-//       const playBtn = li.querySelector('.play');
-//       const addBtn  = li.querySelector('.add');
-
-//       li.addEventListener('click', (e)=>{
-//         if (e.target === playBtn || e.target === addBtn) return;
-//         if (!isInTracks(rel)){
-//           state.tracks.push({ label: it.label, path: rel });
-//           markDirty();
-//           renderTracks(state.tracks);
-//           addBtn.disabled = true; addBtn.textContent = 'ADDED';
-//         }
-//       }, { passive:true });
-
-//       playBtn.addEventListener('click', async (e)=>{
-//         e.stopPropagation();
-//         await playUrl(url, { origin:'picker' });
-//         refreshPlayingUI();
-//       }, { passive:false });
-
-//       addBtn.addEventListener('click', (e)=>{
-//         e.stopPropagation();
-//         if (addBtn.disabled) return;
-//         state.tracks.push({ label: it.label, path: rel });
-//         markDirty();
-//         renderTracks(state.tracks);
-//         addBtn.disabled = true; addBtn.textContent = 'ADDED';
-//       }, { passive:true });
-
-//       results.appendChild(li);
-//     });
-//   }
-
-//   search.addEventListener('input', ()=>{
-//     const q = search.value.trim().toLowerCase();
-//     libState.filtered = !q ? libState.items :
-//       libState.items.filter(it => {
-//         const rel = sanitizePath(it.path);
-//         return rel && (it.label.toLowerCase().includes(q) || rel.toLowerCase().includes(q));
-//       });
-//     renderResults(libState.filtered);
-//   });
-//   pickClose.addEventListener('click', ()=> closePicker(), { passive:true });
-//   addTracksBtn.addEventListener('click', async ()=>{ await ensureLibrary(); openPicker(); }, { passive:true });
-
-//   // Info
-//   infoToggle.addEventListener('click', ()=>{
-//     const expanded = infoToggle.getAttribute('aria-expanded') === 'true';
-//     infoToggle.setAttribute('aria-expanded', expanded ? 'false' : 'true');
-//     aeDesc.style.display = expanded ? 'none' : 'block';
-//     infoToggle.textContent = expanded ? 'Expand' : 'Collapse';
-//     markDirty();
-//   }, { passive:true });
-
-//   // Cover URL
-//   coverUrl.addEventListener('change', async ()=>{
-//     const src = coverUrl.value.trim();
-//     setCover(src);
-//     markDirty();
-//     const id = aeId.value;
-//     if (!id) return;
-//     try{
-//       await api(`/me/albums/${encodeURIComponent(id)}`, {
-//         method:'POST',
-//         headers:{ 'Content-Type': 'application/json' },
-//         body: JSON.stringify({ cover_url: src })
-//       });
-//       state.dirty = false;
-//     }catch{}
-//   }, { passive:true });
-
-//   // Cover upload
-//   coverFile.addEventListener('change', async ()=>{
-//     const f = coverFile.files && coverFile.files[0]; if(!f) return;
-//     const id = aeId.value; if(!id) return;
-//     const fd = new FormData(); fd.append('file', f);
-//     try{
-//       const d = await api(`/me/albums/${encodeURIComponent(id)}/cover`, { method:'POST', body: fd });
-//       setCover(d?.cover_url || '');
-//       coverUrl.value = d?.cover_url || '';
-//       state.dirty = false;
-//     }catch{}
-//   });
-
-//   // Save
-//   form.addEventListener('submit', async (e)=>{
-//     e.preventDefault();
-//     const albumId = aeId.value;
-//     const cleanTracks = state.tracks
-//       .map(t => ({ label: t.label, path: sanitizePath(t.path) }))
-//       .filter(t => t.path && hasMediaExt(t.path));
-//     const body = {
-//       title: aeTitle.value.trim(),
-//       description_md: aeDesc.value,
-//       visibility: aeVis.value,
-//       cover_url: coverImg.src || coverUrl.value || '',
-//       metadata: { tracks: cleanTracks }
-//     };
-//     try{
-//       await api(`/me/albums/${encodeURIComponent(albumId)}`, {
-//         method:'POST',
-//         headers:{ 'Content-Type': 'application/json' },
-//         body: JSON.stringify(body)
-//       });
-//       state.dirty = false;
-//       close(editor);
-//       document.dispatchEvent(new CustomEvent('albums:refresh'));
-//     }catch(err){
-//       ERR('save failed', err);
-//       alert('Save failed.');
-//     }
-//   }, { passive:false });
-
-//   // Load album
-//   async function loadAlbum(id){
-//     const { album } = await api(`/me/albums/${encodeURIComponent(id)}`, { method:'GET' });
-//     state.current = album;
-//     aeId.value = album.id;
-//     aeTitle.value = album.title || '';
-//     aeDesc.value = album.description_md || '';
-//     aeVis.value = album.visibility || 'private';
-//     coverUrl.value = album.cover_url || '';
-//     setCover(album.cover_url || '');
-
-//     const tr = (album.metadata && Array.isArray(album.metadata.tracks)) ? album.metadata.tracks : [];
-//     state.tracks = tr.map(t => {
-//       const rel = sanitizePath(t.path || '');
-//       const label = t.label || (rel.split('/').pop() || 'Track');
-//       return { label, path: rel };
-//     }).filter(x => x.path);
-//     state.dirty = false;
-//     renderTracks(state.tracks);
-//     refreshPlayingUI();
-//     LOG('album loaded', album.id, 'tracks:', state.tracks.length);
-//   }
-
-//   // Open editor from albums grid
-//   if (albumsRoot){
-//     albumsRoot.addEventListener('click', async (e)=>{
-//       const li = e.target.closest('.album-card');
-//       if (!li || li.classList.contains('create') || li.classList.contains('ghost')) return;
-//       const id = li.getAttribute('data-album-id');
-//       if (!id) return;
-//       await loadAlbum(id);
-//       open(editor);
-//     }, { passive:true });
-//   }
-
-//   // Refresh albums grid after save
-//   document.addEventListener('albums:refresh', async ()=>{
-//     const tab = qs('.acct-tab[data-tab="albums"]');
-//     if (tab) tab.click();
-//   }, { passive:true });
-
-//   // Player
-//   async function headOk(url){
-//     try{
-//       const r = await fetch(url, { method:'HEAD', cache:'no-store' });
-//       return r.ok;
-//     }catch(e){
-//       return false;
-//     }
-//   }
-
-//   async function playUrl(url, ctx={}){
-//     const hookOk = (typeof loadPlaylistIndex === 'function') && Array.isArray(playlist);
-//     if (!hookOk){
-//       WARN('no compatible player hook found', { hasLoad: typeof loadPlaylistIndex, hasPlaylist: Array.isArray(playlist) });
-//       return;
-//     }
-
-//     const abs = resolveUrl(url);
-//     LOG('play request', { from: ctx.origin||'unknown', url: abs });
-
-//     const ok = await headOk(abs);
-//     if (!ok){
-//       WARN('HEAD 404, aborting play (no retry loop)', abs);
-//       return;
-//     }
-
-//     // Same as current? just repaint UI.
-//     if (state.playingUrl && resolveUrl(state.playingUrl) === abs){
-//       refreshPlayingUI();
-//       return;
-//     }
-
-//     // Ensure playlist entry exists
-//     let idx = playlist.findIndex(p => resolveUrl(p.url) === abs);
-//     if (idx === -1){
-//       const label = decodeURIComponent(abs.split('/').pop() || 'Track');
-//       playlist.push({ type: mediaTypeFromExt(abs), label, url: abs });
-//       if (typeof refreshPlaylistSelect === 'function') refreshPlaylistSelect();
-//       idx = playlist.length - 1;
-//       LOG('appended temp playlist entry', { idx, label });
-//     }
-
-//     try{
-//       const okLoad = await loadPlaylistIndex(idx);
-//       if (okLoad === false){ WARN('loadPlaylistIndex returned false', { idx, url: abs }); return; }
-//       state.playingUrl = abs;
-//       refreshPlayingUI();
-//       LOG('playing', { idx, url: abs });
-//     }catch(err){
-//       ERR('play failed', err);
-//     }
-//   }
-
-//   // PLAY/PLAYING repaint
-//   function refreshPlayingUI(){
-//     qsa('#aeResults li', editor).forEach(li=>{
-//       const rel = String(li.dataset.path||'');
-//       const url = buildUrl(rel);
-//       const on = state.playingUrl && resolveUrl(url) === resolveUrl(state.playingUrl);
-//       const playBtn = li.querySelector('.play');
-//       li.classList.toggle('is-playing', !!on);
-//       if (playBtn) playBtn.textContent = on ? 'PLAYING' : 'Play';
-//     });
-//     qsa('.ae-track', tracksBox).forEach(li=>{
-//       const rel = String(li.dataset.path||'');
-//       const url = buildUrl(rel);
-//       const on = state.playingUrl && resolveUrl(url) === resolveUrl(state.playingUrl);
-//       const btn = li.querySelector('.play');
-//       if (btn) btn.textContent = on ? 'PLAYING' : 'Play';
-//     });
-//   }
-// })();
-
-
-// // Album Editor: picker + tracks + save + player interop (sanitized paths, no 404 loops, verbose logs)
-// (() => {
-//   const qs=(s,r=document)=>r.querySelector(s); const qsa=(s,r=document)=>Array.from(r.querySelectorAll(s));
-//   const editor = qs('#albumEditor'); if(!editor) return;
-
-//   const appDiv = qs('#app');
-//   const BASE = (appDiv?.dataset.base || 'media/archives').replace(/\/+$/,'');
-//   const LOG = (...a)=>console.log('[AlbumEditor]', ...a);
-//   const WARN = (...a)=>console.warn('[AlbumEditor]', ...a);
-//   const ERR = (...a)=>console.error('[AlbumEditor]', ...a);
-
-//   // DOM
-//   const form = qs('#albumEditorForm', editor);
-//   const panel = qs('.help-panel', editor);
-//   const closeBtn = qs('#albumEditorClose', editor);
-//   const coverImg = qs('#aeCoverImg', editor);
-//   const coverUrl = qs('#aeCoverUrl', editor);
-//   const coverFile= qs('#aeCoverFile', editor);
-//   const aeId     = qs('#aeId', editor);
-//   const aeTitle  = qs('#aeTitle', editor);
-//   const aeDesc   = qs('#aeDesc', editor);
-//   const aeVis    = qs('#aeVisibility', editor);
-//   const infoToggle = qs('#aeInfoToggle', editor);
-
-//   const tracksBox = qs('#aeTracks', editor);
-//   const addTracksBtn = qs('#aeAddTracks', editor);
-
-//   const picker = qs('#aePicker', editor);
-//   const search = qs('#aeSearch', editor);
-//   const results= qs('#aeResults', editor);
-//   const pickClose= qs('#aePickerClose', editor);
-
-//   const albumsRoot = qs('#acctAlbums');
-
-//   async function api(path, opts={}){
-//     const o = Object.assign({ credentials:'same-origin' }, opts);
-//     const res = await fetch(path, o);
-//     const ct = res.headers.get('content-type')||'';
-//     const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
-//     if(!res.ok) throw Object.assign(new Error('HTTP '+res.status), {status:res.status, data});
-//     return data;
-//   }
-
-//   // Purpose: Generate a self-contained SVG cover when none is set; avoids empty <img src="">
-//   function genDefaultCover(title='Album'){
-//     const t = (title || 'Album').slice(0, 2).toUpperCase();
-//     const hue = Math.abs([...title].reduce((a,c)=>a+c.charCodeAt(0),0)) % 360;
-//     const h2  = (hue + 35) % 360;
-//     const svg =
-//       `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="640" viewBox="0 0 640 640">
-//         <defs>
-//           <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-//             <stop offset="0%" stop-color="hsl(${hue},70%,45%)"/>
-//             <stop offset="100%" stop-color="hsl(${h2},70%,55%)"/>
-//           </linearGradient>
-//         </defs>
-//         <rect width="640" height="640" fill="url(#g)"/>
-//         <circle cx="320" cy="320" r="220" fill="rgba(255,255,255,0.12)"/>
-//         <text x="50%" y="54%" text-anchor="middle" font-family="system-ui, sans-serif" font-size="200" font-weight="700" fill="rgba(255,255,255,0.9)">${t}</text>
-//       </svg>`;
-//     return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
-//   }
-
-//   function open(el){ el.classList.remove('hidden'); }
-//   function close(el){ el.classList.add('hidden'); }
-//   function setCover(src, title){
-//     const safe = (src && src.trim()) ? src : genDefaultCover(title || aeTitle?.value || 'Album');
-//     coverImg.src = safe;
-//   }
-//   function encodePath(p){ return p.split('/').map(encodeURIComponent).join('/'); }
-//   function resolveUrl(u){ try{ return new URL(u, location.href).href; }catch{ return u; } }
-//   function buildUrl(rel){ return `${BASE}/${encodePath(rel)}`; }
-//   function hasMediaExt(p){
-//     const ext = (p.split('.').pop()||'').toLowerCase();
-//     return ['mp3','wav','ogg','m4a','flac','aac','mp4','webm','ogv','mov','m4v','m3u8','mpd','jpg','jpeg','png','gif','webp','bmp'].includes(ext);
-//   }
-//   function sanitizePath(raw){
-//     if (!raw) return '';
-//     let s = String(raw)
-//       .replace(/^[\s\u2500-\u257F|>]+/g,'')
-//       .replace(/^(├─*|└─*|─+|┌─*|│)+\s*/g,'')
-//       .replace(/\s{2,}/g,' ')
-//       .trim();
-//     if (s.endsWith('/')) return '';
-//     return s;
-//   }
-//   function mediaTypeFromExt(path){
-//     const ext = (path.split('.').pop()||'').toLowerCase();
-//     if (['mp3','wav','ogg','m4a','flac','aac'].includes(ext)) return 'audio';
-//     if (['mp4','webm','ogv','mov','m4v'].includes(ext))       return 'video';
-//     if (['jpg','jpeg','png','gif','webp','bmp'].includes(ext)) return 'image';
-//     if (ext === 'm3u8') return 'hls';
-//     if (ext === 'mpd')  return 'dash';
-//     return 'audio';
-//   }
-
-//   const libState = { ready:false, items:[], filtered:[] };
-//   async function ensureLibrary(){
-//     if (libState.ready) return libState.items;
-//     const url = appDiv?.dataset.tree;
-//     if (!url) { libState.ready=true; libState.items=[]; return libState.items; }
-//     const text = await fetch(url, { credentials:'same-origin', cache:'no-store' }).then(r=>r.text());
-//     let files = [];
-//     if (typeof parseTreeToFiles === 'function') {
-//       files = parseTreeToFiles(text);
-//     } else {
-//       files = text.split(/\r?\n/).map(s=>sanitizePath(s)).filter(Boolean).filter(hasMediaExt);
-//     }
-//     libState.items = files.map(p=>({ path:p, label:(p.split('/').pop()||p) }));
-//     libState.ready = true;
-//     LOG('library loaded', libState.items.length, 'items');
-//     return libState.items;
-//   }
-
-//   const state = { tracks: [], current: null, dirty: false, playingUrl: null };
-//   function markDirty(){ state.dirty = true; }
-
-//   ['input','change','keyup','paste'].forEach(ev=>{
-//     form.addEventListener(ev, (e)=>{
-//       if (e.target && (e.target.closest('#albumEditorForm') || e.target.closest('#aePicker'))) markDirty();
-//     }, { passive:true });
-//   });
-//   window.addEventListener('beforeunload', (e)=>{
-//     if (state.dirty){ e.preventDefault(); e.returnValue=''; }
-//   });
-//   function requestClose(){
-//     if (!state.dirty) { close(editor); return; }
-//     if (window.confirm('Discard unsaved changes?')){ state.dirty=false; close(editor); }
-//   }
-//   closeBtn.addEventListener('click', requestClose, { passive:true });
-//   editor.addEventListener('click', (e)=>{ if (e.target===editor) requestClose(); }, { passive:true });
-//   editor.addEventListener('keydown', (e)=>{ if (e.key==='Escape'){ e.stopPropagation(); requestClose(); } }, { passive:false });
-
-//   function renderTracks(list){
-//     tracksBox.innerHTML = '';
-//     list.forEach((t,idx)=>{
-//       const rel = sanitizePath(t.path);
-//       if (!rel) return;
-//       const url = buildUrl(rel);
-//       const isPlaying = (state.playingUrl && resolveUrl(state.playingUrl) === resolveUrl(url));
-//       const li = document.createElement('div');
-//       li.className = 'ae-track'; li.draggable = true;
-//       li.dataset.idx = String(idx);
-//       li.dataset.path = rel;
-//       li.innerHTML = `
-//         <div class="grip">⋮⋮</div>
-//         <div class="title" title="${t.label}">${String(idx+1).padStart(2,'0')}. ${t.label}</div>
-//         <div class="ae-row-actions">
-//           <button class="play" type="button">${isPlaying ? 'PLAYING' : 'Play'}</button>
-//           <button class="rm" type="button">Remove</button>
-//         </div>
-//       `;
-//       tracksBox.appendChild(li);
-//     });
-//     bindDnD(); bindTrackRowActions();
-//   }
-
-//   function bindTrackRowActions(){
-//     qsa('.ae-track', tracksBox).forEach(li=>{
-//       const idx = Number(li.dataset.idx);
-//       const rel = String(li.dataset.path||'');
-//       const url = buildUrl(rel);
-//       const playBtn = li.querySelector('.play');
-//       const rmBtn   = li.querySelector('.rm');
-//       playBtn.addEventListener('click', async (e)=>{
-//         e.stopPropagation();
-//         await playUrl(url, { origin:'tracks', idx });
-//         refreshPlayingUI();
-//       }, { passive:false });
-//       rmBtn.addEventListener('click', ()=>{
-//         state.tracks.splice(idx,1);
-//         markDirty();
-//         renderTracks(state.tracks);
-//       }, { passive:true });
-//     });
-//   }
-
-//   function bindDnD(){
-//     let src=null;
-//     tracksBox.addEventListener('dragstart',e=>{
-//       const li = e.target.closest('.ae-track'); if(!li) return;
-//       src = Number(li.dataset.idx); e.dataTransfer.effectAllowed='move';
-//     });
-//     tracksBox.addEventListener('dragover',e=>{
-//       if(src==null) return; e.preventDefault(); e.dataTransfer.dropEffect='move';
-//     });
-//     tracksBox.addEventListener('drop',e=>{
-//       if(src==null) return; e.preventDefault();
-//       const li = e.target.closest('.ae-track'); if(!li) return;
-//       const dst = Number(li.dataset.idx);
-//       if (dst===src) { src=null; return; }
-//       const item = state.tracks.splice(src,1)[0];
-//       state.tracks.splice(dst,0,item);
-//       src=null; markDirty(); renderTracks(state.tracks);
-//     });
-//     tracksBox.addEventListener('dragend',()=>{ src=null; });
-//   }
-
-//   function openPicker(){ open(picker); search.value=''; renderResults(libState.items); search.focus(); }
-//   function closePicker(){ close(picker); }
-//   function isInTracks(rel){ return state.tracks.some(t => sanitizePath(t.path) === sanitizePath(rel)); }
-
-//   function renderResults(list){
-//     results.innerHTML = '';
-//     list.forEach((it)=>{
-//       const rel = sanitizePath(it.path);
-//       if (!rel || !hasMediaExt(rel)) return;
-//       const url = buildUrl(rel);
-//       const isDup = isInTracks(rel);
-//       const isPlaying = (state.playingUrl && resolveUrl(state.playingUrl) === resolveUrl(url));
-//       const li = document.createElement('li');
-//       li.dataset.path = rel;
-//       if (isPlaying) li.classList.add('is-playing');
-//       li.innerHTML = `
-//         <div class="title" title="${rel}">${it.label}</div>
-//         <div class="ae-row-actions">
-//           <button class="play" type="button">${isPlaying ? 'PLAYING' : 'Play'}</button>
-//           <button class="add" type="button" ${isDup ? 'disabled' : ''}>${isDup ? 'ADDED' : 'ADD'}</button>
-//         </div>
-//       `;
-//       const playBtn = li.querySelector('.play');
-//       const addBtn  = li.querySelector('.add');
-//       li.addEventListener('click', (e)=>{
-//         if (e.target === playBtn || e.target === addBtn) return;
-//         if (!isInTracks(rel)){
-//           state.tracks.push({ label: it.label, path: rel });
-//           markDirty();
-//           renderTracks(state.tracks);
-//           addBtn.disabled = true; addBtn.textContent = 'ADDED';
-//         }
-//       }, { passive:true });
-//       playBtn.addEventListener('click', async (e)=>{
-//         e.stopPropagation();
-//         await playUrl(url, { origin:'picker' });
-//         refreshPlayingUI();
-//       }, { passive:false });
-//       addBtn.addEventListener('click', (e)=>{
-//         e.stopPropagation();
-//         if (addBtn.disabled) return;
-//         state.tracks.push({ label: it.label, path: rel });
-//         markDirty();
-//         renderTracks(state.tracks);
-//         addBtn.disabled = true; addBtn.textContent = 'ADDED';
-//       }, { passive:true });
-//       results.appendChild(li);
-//     });
-//   }
-
-//   search.addEventListener('input', ()=>{
-//     const q = search.value.trim().toLowerCase();
-//     libState.filtered = !q ? libState.items :
-//       libState.items.filter(it => {
-//         const rel = sanitizePath(it.path);
-//         return rel && (it.label.toLowerCase().includes(q) || rel.toLowerCase().includes(q));
-//       });
-//     renderResults(libState.filtered);
-//   });
-//   pickClose.addEventListener('click', ()=> closePicker(), { passive:true });
-//   addTracksBtn.addEventListener('click', async ()=>{ await ensureLibrary(); openPicker(); }, { passive:true });
-
-//   infoToggle.addEventListener('click', ()=>{
-//     const expanded = infoToggle.getAttribute('aria-expanded') === 'true';
-//     infoToggle.setAttribute('aria-expanded', expanded ? 'false' : 'true');
-//     aeDesc.style.display = expanded ? 'none' : 'block';
-//     infoToggle.textContent = expanded ? 'Expand' : 'Collapse';
-//     markDirty();
-//   }, { passive:true });
-
-//   coverUrl.addEventListener('change', async ()=>{
-//     const src = coverUrl.value.trim();
-//     setCover(src, aeTitle.value);
-//     markDirty();
-//     const id = aeId.value; if (!id) return;
-//     try{
-//       await api(`/me/albums/${encodeURIComponent(id)}`, {
-//         method:'POST',
-//         headers:{ 'Content-Type': 'application/json' },
-//         body: JSON.stringify({ cover_url: src })
-//       });
-//       state.dirty = false;
-//     }catch{}
-//   }, { passive:true });
-
-//   coverFile.addEventListener('change', async ()=>{
-//     const f = coverFile.files && coverFile.files[0]; if(!f) return;
-//     const id = aeId.value; if(!id) return;
-//     const fd = new FormData(); fd.append('file', f);
-//     try{
-//       const d = await api(`/me/albums/${encodeURIComponent(id)}/cover`, { method:'POST', body: fd });
-//       setCover(d?.cover_url || '', aeTitle.value);
-//       coverUrl.value = d?.cover_url || '';
-//       state.dirty = false;
-//     }catch{}
-//   });
-
-//   form.addEventListener('submit', async (e)=>{
-//     e.preventDefault();
-//     const albumId = aeId.value;
-//     const cleanTracks = state.tracks
-//       .map(t => ({ label: t.label, path: sanitizePath(t.path) }))
-//       .filter(t => t.path && hasMediaExt(t.path));
-//     const body = {
-//       title: aeTitle.value.trim(),
-//       description_md: aeDesc.value,
-//       visibility: aeVis.value,
-//       cover_url: coverImg.src || coverUrl.value || '',
-//       metadata: { tracks: cleanTracks }
-//     };
-//     try{
-//       await api(`/me/albums/${encodeURIComponent(albumId)}`, {
-//         method:'POST',
-//         headers:{ 'Content-Type': 'application/json' },
-//         body: JSON.stringify(body)
-//       });
-//       state.dirty = false;
-//       close(editor);
-//       document.dispatchEvent(new CustomEvent('albums:refresh'));
-//     }catch(err){
-//       ERR('save failed', err);
-//       alert('Save failed.');
-//     }
-//   }, { passive:false });
-
-//   async function loadAlbum(id){
-//     const { album } = await api(`/me/albums/${encodeURIComponent(id)}`, { method:'GET' });
-//     state.current = album;
-//     aeId.value = album.id;
-//     aeTitle.value = album.title || '';
-//     aeDesc.value = album.description_md || '';
-//     aeVis.value = album.visibility || 'private';
-//     coverUrl.value = album.cover_url || '';
-//     setCover(album.cover_url || '', album.title);
-//     const tr = (album.metadata && Array.isArray(album.metadata.tracks)) ? album.metadata.tracks : [];
-//     state.tracks = tr.map(t => {
-//       const rel = sanitizePath(t.path || '');
-//       const label = t.label || (rel.split('/').pop() || 'Track');
-//       return { label, path: rel };
-//     }).filter(x => x.path);
-//     state.dirty = false;
-//     renderTracks(state.tracks);
-//     refreshPlayingUI();
-//     LOG('album loaded', album.id, 'tracks:', state.tracks.length);
-//   }
-
-//   if (albumsRoot){
-//     albumsRoot.addEventListener('click', async (e)=>{
-//       const li = e.target.closest('.album-card');
-//       if (!li || li.classList.contains('create') || li.classList.contains('ghost')) return;
-//       const id = li.getAttribute('data-album-id');
-//       if (!id) return;
-//       await loadAlbum(id);
-//       open(editor);
-//     }, { passive:true });
-//   }
-
-//   document.addEventListener('albums:refresh', async ()=>{
-//     const tab = qs('.acct-tab[data-tab="albums"]');
-//     if (tab) tab.click();
-//   }, { passive:true });
-
-//   async function headOk(url){
-//     try{
-//       const r = await fetch(url, { method:'HEAD', cache:'no-store' });
-//       return r.ok;
-//     }catch(e){
-//       return false;
-//     }
-//   }
-
-//   async function playUrl(url, ctx={}){
-//     const hookOk = (typeof loadPlaylistIndex === 'function') && Array.isArray(playlist);
-//     if (!hookOk){
-//       WARN('no compatible player hook found', { hasLoad: typeof loadPlaylistIndex, hasPlaylist: Array.isArray(playlist) });
-//       return;
-//     }
-//     const abs = resolveUrl(url);
-//     LOG('play request', { from: ctx.origin||'unknown', url: abs });
-//     const ok = await headOk(abs);
-//     if (!ok){
-//       WARN('HEAD 404, aborting play (no retry loop)', abs);
-//       return;
-//     }
-//     if (state.playingUrl && resolveUrl(state.playingUrl) === abs){
-//       refreshPlayingUI();
-//       return;
-//     }
-//     let idx = playlist.findIndex(p => resolveUrl(p.url) === abs);
-//     if (idx === -1){
-//       const label = decodeURIComponent(abs.split('/').pop() || 'Track');
-//       playlist.push({ type: mediaTypeFromExt(abs), label, url: abs });
-//       if (typeof refreshPlaylistSelect === 'function') refreshPlaylistSelect();
-//       idx = playlist.length - 1;
-//       LOG('appended temp playlist entry', { idx, label });
-//     }
-//     try{
-//       const okLoad = await loadPlaylistIndex(idx);
-//       if (okLoad === false){ WARN('loadPlaylistIndex returned false', { idx, url: abs }); return; }
-//       state.playingUrl = abs;
-//       refreshPlayingUI();
-//       LOG('playing', { idx, url: abs });
-//     }catch(err){
-//       ERR('play failed', err);
-//     }
-//   }
-
-//   function refreshPlayingUI(){
-//     qsa('#aeResults li', editor).forEach(li=>{
-//       const rel = String(li.dataset.path||'');
-//       const url = buildUrl(rel);
-//       const on = state.playingUrl && resolveUrl(url) === resolveUrl(state.playingUrl);
-//       const playBtn = li.querySelector('.play');
-//       li.classList.toggle('is-playing', !!on);
-//       if (playBtn) playBtn.textContent = on ? 'PLAYING' : 'Play';
-//     });
-//     qsa('.ae-track', tracksBox).forEach(li=>{
-//       const rel = String(li.dataset.path||'');
-//       const url = buildUrl(rel);
-//       const on = state.playingUrl && resolveUrl(url) === resolveUrl(state.playingUrl);
-//       const btn = li.querySelector('.play');
-//       if (btn) btn.textContent = on ? 'PLAYING' : 'Play';
-//     });
-//   }
-// })();
-
-
-
-
-// // Album Editor: picker + tracks + save + player interop (sanitized paths, no 404 loops, verbose logs)
-// (() => {
-//   const qs=(s,r=document)=>r.querySelector(s); const qsa=(s,r=document)=>Array.from(r.querySelectorAll(s));
-//   const editor = qs('#albumEditor'); if(!editor) return;
-
-//   const appDiv = qs('#app');
-//   const BASE = (appDiv?.dataset.base || 'media/archives').replace(/\/+$/,'');
-//   const LOG = (...a)=>console.log('[AlbumEditor]', ...a);
-//   const WARN = (...a)=>console.warn('[AlbumEditor]', ...a);
-//   const ERR = (...a)=>console.error('[AlbumEditor]', ...a);
-
-//   // DOM
-//   const form = qs('#albumEditorForm', editor);
-//   const closeBtn = qs('#albumEditorClose', editor);
-//   const coverImg = qs('#aeCoverImg', editor);
-//   const coverUrl = qs('#aeCoverUrl', editor);
-//   const coverFile= qs('#aeCoverFile', editor);
-//   const aeId     = qs('#aeId', editor);
-//   const aeTitle  = qs('#aeTitle', editor);
-//   const aeBand   = qs('#aeBand', editor);
-//   const aeDesc   = qs('#aeDesc', editor);
-//   const aeVis    = qs('#aeVisibility', editor);
-//   const infoToggle = qs('#aeInfoToggle', editor);
-
-//   const tracksBox = qs('#aeTracks', editor);
-//   const addTracksBtn = qs('#aeAddTracks', editor);
-
-//   const picker = qs('#aePicker', editor);
-//   const search = qs('#aeSearch', editor);
-//   const results= qs('#aeResults', editor);
-//   const pickClose= qs('#aePickerClose', editor);
-
-//   const albumsRoot = qs('#acctAlbums');
-
-//   async function api(path, opts={}){
-//     const o = Object.assign({ credentials:'same-origin' }, opts);
-//     const res = await fetch(path, o);
-//     const ct = res.headers.get('content-type')||'';
-//     const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
-//     if(!res.ok) throw Object.assign(new Error('HTTP '+res.status), {status:res.status, data});
-//     return data;
-//   }
-
-//   function genDefaultCover(title='Album'){
-//     const t = (title || 'Album').slice(0, 2).toUpperCase();
-//     const hue = Math.abs([...title].reduce((a,c)=>a+c.charCodeAt(0),0)) % 360;
-//     const h2  = (hue + 35) % 360;
-//     const svg =
-//       `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="640" viewBox="0 0 640 640">
-//         <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-//           <stop offset="0%" stop-color="hsl(${hue},70%,45%)"/><stop offset="100%" stop-color="hsl(${h2},70%,55%)"/>
-//         </linearGradient></defs>
-//         <rect width="640" height="640" fill="url(#g)"/>
-//         <circle cx="320" cy="320" r="220" fill="rgba(255,255,255,0.12)"/>
-//         <text x="50%" y="54%" text-anchor="middle" font-family="system-ui, sans-serif" font-size="200" font-weight="700" fill="rgba(255,255,255,0.9)">${t}</text>
-//       </svg>`;
-//     return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
-//   }
-
-//   function open(el){ el.classList.remove('hidden'); }
-//   function close(el){ el.classList.add('hidden'); }
-//   function setCover(src, title){
-//     const safe = (src && src.trim()) ? src : genDefaultCover(title || aeTitle?.value || 'Album');
-//     coverImg.src = safe;
-//   }
-//   function encodePath(p){ return p.split('/').map(encodeURIComponent).join('/'); }
-//   function resolveUrl(u){ try{ return new URL(u, location.href).href; }catch{ return u; } }
-//   function buildUrl(rel){ return `${BASE}/${encodePath(rel)}`; }
-//   function hasMediaExt(p){
-//     const ext = (p.split('.').pop()||'').toLowerCase();
-//     return ['mp3','wav','ogg','m4a','flac','aac','mp4','webm','ogv','mov','m4v','m3u8','mpd','jpg','jpeg','png','gif','webp','bmp'].includes(ext);
-//   }
-//   function sanitizePath(raw){
-//     if (!raw) return '';
-//     let s = String(raw)
-//       .replace(/^[\s\u2500-\u257F|>]+/g,'')
-//       .replace(/^(├─*|└─*|─+|┌─*|│)+\s*/g,'')
-//       .replace(/\s{2,}/g,' ')
-//       .trim();
-//     if (s.endsWith('/')) return '';
-//     return s;
-//   }
-//   function mediaTypeFromExt(path){
-//     const ext = (path.split('.').pop()||'').toLowerCase();
-//     if (['mp3','wav','ogg','m4a','flac','aac'].includes(ext)) return 'audio';
-//     if (['mp4','webm','ogv','mov','m4v'].includes(ext))       return 'video';
-//     if (['jpg','jpeg','png','gif','webp','bmp'].includes(ext)) return 'image';
-//     if (ext === 'm3u8') return 'hls';
-//     if (ext === 'mpd')  return 'dash';
-//     return 'audio';
-//   }
-
-//   const libState = { ready:false, items:[], filtered:[] };
-//   async function ensureLibrary(){
-//     if (libState.ready) return libState.items;
-//     const url = appDiv?.dataset.tree;
-//     if (!url) { libState.ready=true; libState.items=[]; return libState.items; }
-//     const text = await fetch(url, { credentials:'same-origin', cache:'no-store' }).then(r=>r.text());
-//     let files = [];
-//     if (typeof parseTreeToFiles === 'function') {
-//       files = parseTreeToFiles(text);
-//     } else {
-//       files = text.split(/\r?\n/).map(s=>sanitizePath(s)).filter(Boolean).filter(hasMediaExt);
-//     }
-//     libState.items = files.map(p=>({ path:p, label:(p.split('/').pop()||p) }));
-//     libState.ready = true;
-//     LOG('library loaded', libState.items.length, 'items');
-//     return libState.items;
-//   }
-
-//   const state = { tracks: [], current: null, dirty: false, playingUrl: null };
-//   function markDirty(){ state.dirty = true; }
-
-//   ['input','change','keyup','paste'].forEach(ev=>{
-//     form.addEventListener(ev, (e)=>{
-//       if (e.target && (e.target.closest('#albumEditorForm') || e.target.closest('#aePicker'))) markDirty();
-//     }, { passive:true });
-//   });
-//   window.addEventListener('beforeunload', (e)=>{
-//     if (state.dirty){ e.preventDefault(); e.returnValue=''; }
-//   });
-//   function requestClose(){
-//     if (!state.dirty) { close(editor); return; }
-//     if (window.confirm('Discard unsaved changes?')){ state.dirty=false; close(editor); }
-//   }
-//   closeBtn.addEventListener('click', requestClose, { passive:true });
-//   editor.addEventListener('click', (e)=>{ if (e.target===editor) requestClose(); }, { passive:true });
-//   editor.addEventListener('keydown', (e)=>{ if (e.key==='Escape'){ e.stopPropagation(); requestClose(); } }, { passive:false });
-
-//   function renderTracks(list){
-//     tracksBox.innerHTML = '';
-//     list.forEach((t,idx)=>{
-//       const rel = sanitizePath(t.path);
-//       if (!rel) return;
-//       const url = buildUrl(rel);
-//       const isPlaying = (state.playingUrl && resolveUrl(state.playingUrl) === resolveUrl(url));
-//       const li = document.createElement('div');
-//       li.className = 'ae-track'; li.draggable = true;
-//       li.dataset.idx = String(idx);
-//       li.dataset.path = rel;
-//       li.innerHTML = `
-//         <div class="grip">⋮⋮</div>
-//         <div class="title" title="${t.label}">${String(idx+1).padStart(2,'0')}. ${t.label}</div>
-//         <div class="ae-row-actions">
-//           <button class="play" type="button">${isPlaying ? 'PLAYING' : 'Play'}</button>
-//           <button class="rm" type="button">Remove</button>
-//         </div>
-//       `;
-//       tracksBox.appendChild(li);
-//     });
-//     bindDnD(); bindTrackRowActions();
-//   }
-
-//   function bindTrackRowActions(){
-//     qsa('.ae-track', tracksBox).forEach(li=>{
-//       const idx = Number(li.dataset.idx);
-//       const rel = String(li.dataset.path||'');
-//       const url = buildUrl(rel);
-//       const playBtn = li.querySelector('.play');
-//       const rmBtn   = li.querySelector('.rm');
-//       playBtn.addEventListener('click', async (e)=>{
-//         e.stopPropagation();
-//         await playUrl(url, { origin:'tracks', idx });
-//         refreshPlayingUI();
-//       }, { passive:false });
-//       rmBtn.addEventListener('click', ()=>{
-//         state.tracks.splice(idx,1);
-//         markDirty();
-//         renderTracks(state.tracks);
-//       }, { passive:true });
-//     });
-//   }
-
-//   function bindDnD(){
-//     let src=null;
-//     tracksBox.addEventListener('dragstart',e=>{
-//       const li = e.target.closest('.ae-track'); if(!li) return;
-//       src = Number(li.dataset.idx); e.dataTransfer.effectAllowed='move';
-//     });
-//     tracksBox.addEventListener('dragover',e=>{
-//       if(src==null) return; e.preventDefault(); e.dataTransfer.dropEffect='move';
-//     });
-//     tracksBox.addEventListener('drop',e=>{
-//       if(src==null) return; e.preventDefault();
-//       const li = e.target.closest('.ae-track'); if(!li) return;
-//       const dst = Number(li.dataset.idx);
-//       if (dst===src) { src=null; return; }
-//       const item = state.tracks.splice(src,1)[0];
-//       state.tracks.splice(dst,0,item);
-//       src=null; markDirty(); renderTracks(state.tracks);
-//     });
-//     tracksBox.addEventListener('dragend',()=>{ src=null; });
-//   }
-
-//   function openPicker(){ open(picker); search.value=''; renderResults(libState.items); search.focus(); }
-//   function closePicker(){ close(picker); }
-//   function isInTracks(rel){ return state.tracks.some(t => sanitizePath(t.path) === sanitizePath(rel)); }
-
-//   function renderResults(list){
-//     results.innerHTML = '';
-//     list.forEach((it)=>{
-//       const rel = sanitizePath(it.path);
-//       if (!rel || !hasMediaExt(rel)) return;
-//       const url = buildUrl(rel);
-//       const isDup = isInTracks(rel);
-//       const isPlaying = (state.playingUrl && resolveUrl(state.playingUrl) === resolveUrl(url));
-//       const li = document.createElement('li');
-//       li.dataset.path = rel;
-//       if (isPlaying) li.classList.add('is-playing');
-//       li.innerHTML = `
-//         <div class="title" title="${rel}">${it.label}</div>
-//         <div class="ae-row-actions">
-//           <button class="play" type="button">${isPlaying ? 'PLAYING' : 'Play'}</button>
-//           <button class="add" type="button" ${isDup ? 'disabled' : ''}>${isDup ? 'ADDED' : 'ADD'}</button>
-//         </div>
-//       `;
-//       const playBtn = li.querySelector('.play');
-//       const addBtn  = li.querySelector('.add');
-//       li.addEventListener('click', (e)=>{
-//         if (e.target === playBtn || e.target === addBtn) return;
-//         if (!isInTracks(rel)){
-//           state.tracks.push({ label: it.label, path: rel });
-//           markDirty();
-//           renderTracks(state.tracks);
-//           addBtn.disabled = true; addBtn.textContent = 'ADDED';
-//         }
-//       }, { passive:true });
-//       playBtn.addEventListener('click', async (e)=>{
-//         e.stopPropagation();
-//         await playUrl(url, { origin:'picker' });
-//         refreshPlayingUI();
-//       }, { passive:false });
-//       addBtn.addEventListener('click', (e)=>{
-//         e.stopPropagation();
-//         if (addBtn.disabled) return;
-//         state.tracks.push({ label: it.label, path: rel });
-//         markDirty();
-//         renderTracks(state.tracks);
-//         addBtn.disabled = true; addBtn.textContent = 'ADDED';
-//       }, { passive:true });
-//       results.appendChild(li);
-//     });
-//   }
-
-//   search.addEventListener('input', ()=>{
-//     const q = search.value.trim().toLowerCase();
-//     libState.filtered = !q ? libState.items :
-//       libState.items.filter(it => {
-//         const rel = sanitizePath(it.path);
-//         return rel && (it.label.toLowerCase().includes(q) || rel.toLowerCase().includes(q));
-//       });
-//     renderResults(libState.filtered);
-//   });
-//   pickClose.addEventListener('click', ()=> closePicker(), { passive:true });
-//   addTracksBtn.addEventListener('click', async ()=>{ await ensureLibrary(); openPicker(); }, { passive:true });
-
-//   infoToggle.addEventListener('click', ()=>{
-//     const expanded = infoToggle.getAttribute('aria-expanded') === 'true';
-//     infoToggle.setAttribute('aria-expanded', expanded ? 'false' : 'true');
-//     aeDesc.style.display = expanded ? 'none' : 'block';
-//     infoToggle.textContent = expanded ? 'Expand' : 'Collapse';
-//     markDirty();
-//   }, { passive:true });
-
-//   coverUrl.addEventListener('change', async ()=>{
-//     const src = coverUrl.value.trim();
-//     setCover(src, aeTitle.value || aeBand?.value);
-//     markDirty();
-//     const id = aeId.value; if (!id) return;
-//     try{
-//       await api(`/me/albums/${encodeURIComponent(id)}`, {
-//         method:'POST',
-//         headers:{ 'Content-Type': 'application/json' },
-//         body: JSON.stringify({ cover_url: src })
-//       });
-//       state.dirty = false;
-//     }catch{}
-//   }, { passive:true });
-
-//   coverFile.addEventListener('change', async ()=>{
-//     const f = coverFile.files && coverFile.files[0]; if(!f) return;
-//     const id = aeId.value; if(!id) return;
-//     const fd = new FormData(); fd.append('file', f);
-//     try{
-//       const d = await api(`/me/albums/${encodeURIComponent(id)}/cover`, { method:'POST', body: fd });
-//       setCover(d?.cover_url || '', aeTitle.value || aeBand?.value);
-//       coverUrl.value = d?.cover_url || '';
-//       state.dirty = false;
-//     }catch{}
-//   });
-
-//   form.addEventListener('submit', async (e)=>{
-//     e.preventDefault();
-//     const albumId = aeId.value;
-//     const cleanTracks = state.tracks
-//       .map(t => ({ label: t.label, path: sanitizePath(t.path) }))
-//       .filter(t => t.path && hasMediaExt(t.path));
-//     const body = {
-//       title: aeTitle.value.trim(),
-//       subtitle: (aeBand?.value || '').trim(),
-//       description_md: aeDesc.value,
-//       visibility: aeVis.value,
-//       cover_url: coverImg.src || coverUrl.value || '',
-//       metadata: { tracks: cleanTracks }
-//     };
-//     try{
-//       await api(`/me/albums/${encodeURIComponent(albumId)}`, {
-//         method:'POST',
-//         headers:{ 'Content-Type': 'application/json' },
-//         body: JSON.stringify(body)
-//       });
-//       state.dirty = false;
-//       close(editor);
-//       document.dispatchEvent(new CustomEvent('albums:refresh'));
-//     }catch(err){
-//       console.error('[AlbumEditor] save failed', err);
-//       alert('Save failed.');
-//     }
-//   }, { passive:false });
-
-//   async function loadAlbum(id){
-//     const { album } = await api(`/me/albums/${encodeURIComponent(id)}`, { method:'GET' });
-//     state.current = album;
-//     aeId.value = album.id;
-//     aeTitle.value = album.title || '';
-//     if (aeBand) aeBand.value = album.subtitle || '';
-//     aeDesc.value = album.description_md || '';
-//     aeVis.value = album.visibility || 'private';
-//     coverUrl.value = album.cover_url || '';
-//     setCover(album.cover_url || '', album.title || album.subtitle);
-
-//     const tr = (album.metadata && Array.isArray(album.metadata.tracks)) ? album.metadata.tracks : [];
-//     state.tracks = tr.map(t => {
-//       const rel = sanitizePath(t.path || '');
-//       const label = t.label || (rel.split('/').pop() || 'Track');
-//       return { label, path: rel };
-//     }).filter(x => x.path);
-//     state.dirty = false;
-//     renderTracks(state.tracks);
-//     refreshPlayingUI();
-//   }
-
-//   if (albumsRoot){
-//     albumsRoot.addEventListener('click', async (e)=>{
-//       const li = e.target.closest('.album-card');
-//       if (!li || li.classList.contains('create') || li.classList.contains('ghost')) return;
-//       const id = li.getAttribute('data-album-id');
-//       if (!id) return;
-//       await loadAlbum(id);
-//       open(editor);
-//     }, { passive:true });
-//   }
-
-//   document.addEventListener('albums:refresh', async ()=>{
-//     const tab = qs('.acct-tab[data-tab="albums"]');
-//     if (tab) tab.click();
-//   }, { passive:true });
-
-//   async function headOk(url){
-//     try{
-//       const r = await fetch(url, { method:'HEAD', cache:'no-store' });
-//       return r.ok;
-//     }catch{ return false; }
-//   }
-
-//   async function playUrl(url, ctx={}){
-//     const hookOk = (typeof loadPlaylistIndex === 'function') && Array.isArray(playlist);
-//     if (!hookOk){
-//       console.warn('[AlbumEditor] no compatible player hook found', { hasLoad: typeof loadPlaylistIndex, hasPlaylist: Array.isArray(playlist) });
-//       return;
-//     }
-//     const abs = resolveUrl(url);
-//     const ok = await headOk(abs);
-//     if (!ok) return;
-//     if (state.playingUrl && resolveUrl(state.playingUrl) === abs){ refreshPlayingUI(); return; }
-//     let idx = playlist.findIndex(p => resolveUrl(p.url) === abs);
-//     if (idx === -1){
-//       const label = decodeURIComponent(abs.split('/').pop() || 'Track');
-//       playlist.push({ type: mediaTypeFromExt(abs), label, url: abs });
-//       if (typeof refreshPlaylistSelect === 'function') refreshPlaylistSelect();
-//       idx = playlist.length - 1;
-//     }
-//     try{
-//       const okLoad = await loadPlaylistIndex(idx);
-//       if (okLoad === false) return;
-//       state.playingUrl = abs;
-//       refreshPlayingUI();
-//     }catch(err){
-//       console.error('[AlbumEditor] play failed', err);
-//     }
-//   }
-
-//   function refreshPlayingUI(){
-//     qsa('#aeResults li', editor).forEach(li=>{
-//       const rel = String(li.dataset.path||'');
-//       const url = buildUrl(rel);
-//       const on = state.playingUrl && resolveUrl(url) === resolveUrl(state.playingUrl);
-//       const playBtn = li.querySelector('.play');
-//       li.classList.toggle('is-playing', !!on);
-//       if (playBtn) playBtn.textContent = on ? 'PLAYING' : 'Play';
-//     });
-//     qsa('.ae-track', tracksBox).forEach(li=>{
-//       const rel = String(li.dataset.path||'');
-//       const url = buildUrl(rel);
-//       const on = state.playingUrl && resolveUrl(url) === resolveUrl(state.playingUrl);
-//       const btn = li.querySelector('.play');
-//       if (btn) btn.textContent = on ? 'PLAYING' : 'Play';
-//     });
-//   }
-// })();
-
-
-
-
-// // Album Editor: picker + tracks + save + player interop (sanitized paths, no 404 loops, verbose logs)
-// (() => {
-//   const qs=(s,r=document)=>r.querySelector(s); const qsa=(s,r=document)=>Array.from(r.querySelectorAll(s));
-//   const editor = qs('#albumEditor'); if(!editor) return;
-
-//   const appDiv = qs('#app');
-//   const BASE = (appDiv?.dataset.base || 'media/archives').replace(/\/+$/,'');
-//   const LOG = (...a)=>console.log('[AlbumEditor]', ...a);
-//   const WARN = (...a)=>console.warn('[AlbumEditor]', ...a);
-//   const ERR = (...a)=>console.error('[AlbumEditor]', ...a);
-
-//   // DOM
-//   const form = qs('#albumEditorForm', editor);
-//   const closeBtn = qs('#albumEditorClose', editor);
-//   const coverImg = qs('#aeCoverImg', editor);
-//   const coverUrl = qs('#aeCoverUrl', editor);
-//   const coverFile= qs('#aeCoverFile', editor);
-//   const aeId     = qs('#aeId', editor);
-//   const aeTitle  = qs('#aeTitle', editor);
-//   const aeBand   = qs('#aeBand', editor);
-//   const aeDesc   = qs('#aeDesc', editor);
-//   const aeVis    = qs('#aeVisibility', editor);
-//   const infoToggle = qs('#aeInfoToggle', editor);
-
-//   const tracksBox = qs('#aeTracks', editor);
-//   const addTracksBtn = qs('#aeAddTracks', editor);
-
-//   const picker = qs('#aePicker', editor);
-//   const search = qs('#aeSearch', editor);
-//   const results= qs('#aeResults', editor);
-//   const pickClose= qs('#aePickerClose', editor);
-
-//   const albumsRoot = qs('#acctAlbums');
-
-//   async function api(path, opts={}){
-//     const o = Object.assign({ credentials:'same-origin' }, opts);
-//     const res = await fetch(path, o);
-//     const ct = res.headers.get('content-type')||'';
-//     const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
-//     if(!res.ok) throw Object.assign(new Error('HTTP '+res.status), {status:res.status, data});
-//     return data;
-//   }
-
-//   // Default square cover (data URI) derived from title/band to avoid empty src
-//   function genDefaultCover(title='Album'){
-//     const t = (title || 'Album').slice(0, 2).toUpperCase();
-//     const hue = Math.abs([...title].reduce((a,c)=>a+c.charCodeAt(0),0)) % 360;
-//     const h2  = (hue + 35) % 360;
-//     const svg =
-//       `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="640" viewBox="0 0 640 640">
-//         <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-//           <stop offset="0%" stop-color="hsl(${hue},70%,45%)"/><stop offset="100%" stop-color="hsl(${h2},70%,55%)"/>
-//         </linearGradient></defs>
-//         <rect width="640" height="640" fill="url(#g)"/>
-//         <circle cx="320" cy="320" r="220" fill="rgba(255,255,255,0.12)"/>
-//         <text x="50%" y="54%" text-anchor="middle" font-family="system-ui, sans-serif" font-size="200" font-weight="700" fill="rgba(255,255,255,0.9)">${t}</text>
-//       </svg>`;
-//     return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
-//   }
-
-//   function open(el){ el.classList.remove('hidden'); }
-//   function close(el){ el.classList.add('hidden'); }
-//   function setCover(src, title){
-//     const safe = (src && src.trim()) ? src : genDefaultCover(title || aeTitle?.value || 'Album');
-//     coverImg.src = safe;
-//   }
-//   function encodePath(p){ return p.split('/').map(encodeURIComponent).join('/'); }
-//   function resolveUrl(u){ try{ return new URL(u, location.href).href; }catch{ return u; } }
-//   function buildUrl(rel){ return `${BASE}/${encodePath(rel)}`; }
-//   function hasMediaExt(p){
-//     const ext = (p.split('.').pop()||'').toLowerCase();
-//     return ['mp3','wav','ogg','m4a','flac','aac','mp4','webm','ogv','mov','m4v','m3u8','mpd','jpg','jpeg','png','gif','webp','bmp'].includes(ext);
-//   }
-//   function sanitizePath(raw){
-//     if (!raw) return '';
-//     let s = String(raw)
-//       .replace(/^[\s\u2500-\u257F|>]+/g,'')
-//       .replace(/^(├─*|└─*|─+|┌─*|│)+\s*/g,'')
-//       .replace(/\s{2,}/g,' ')
-//       .trim();
-//     if (s.endsWith('/')) return '';
-//     return s;
-//   }
-//   function mediaTypeFromExt(path){
-//     const ext = (path.split('.').pop()||'').toLowerCase();
-//     if (['mp3','wav','ogg','m4a','flac','aac'].includes(ext)) return 'audio';
-//     if (['mp4','webm','ogv','mov','m4v'].includes(ext))       return 'video';
-//     if (['jpg','jpeg','png','gif','webp','bmp'].includes(ext)) return 'image';
-//     if (ext === 'm3u8') return 'hls';
-//     if (ext === 'mpd')  return 'dash';
-//     return 'audio';
-//   }
-
-//   const libState = { ready:false, items:[], filtered:[] };
-//   async function ensureLibrary(){
-//     if (libState.ready) return libState.items;
-//     const url = appDiv?.dataset.tree;
-//     if (!url) { libState.ready=true; libState.items=[]; return libState.items; }
-//     const text = await fetch(url, { credentials:'same-origin', cache:'no-store' }).then(r=>r.text());
-//     let files = [];
-//     if (typeof parseTreeToFiles === 'function') {
-//       files = parseTreeToFiles(text);
-//     } else {
-//       files = text.split(/\r?\n/).map(s=>sanitizePath(s)).filter(Boolean).filter(hasMediaExt);
-//     }
-//     libState.items = files.map(p=>({ path:p, label:(p.split('/').pop()||p) }));
-//     libState.ready = true;
-//     LOG('library loaded', libState.items.length, 'items');
-//     return libState.items;
-//   }
-
-//   const state = { tracks: [], current: null, dirty: false, playingUrl: null };
-//   function markDirty(){ state.dirty = true; }
-
-//   ['input','change','keyup','paste'].forEach(ev=>{
-//     form.addEventListener(ev, (e)=>{
-//       if (e.target && (e.target.closest('#albumEditorForm') || e.target.closest('#aePicker'))) markDirty();
-//     }, { passive:true });
-//   });
-//   window.addEventListener('beforeunload', (e)=>{
-//     if (state.dirty){ e.preventDefault(); e.returnValue=''; }
-//   });
-//   function requestClose(){
-//     if (!state.dirty) { close(editor); return; }
-//     if (window.confirm('Discard unsaved changes?')){ state.dirty=false; close(editor); }
-//   }
-//   closeBtn.addEventListener('click', requestClose, { passive:true });
-//   editor.addEventListener('click', (e)=>{ if (e.target===editor) requestClose(); }, { passive:true });
-//   editor.addEventListener('keydown', (e)=>{ if (e.key==='Escape'){ e.stopPropagation(); requestClose(); } }, { passive:false });
-
-//   function renderTracks(list){
-//     tracksBox.innerHTML = '';
-//     list.forEach((t,idx)=>{
-//       const rel = sanitizePath(t.path);
-//       if (!rel) return;
-//       const url = buildUrl(rel);
-//       const isPlaying = (state.playingUrl && resolveUrl(state.playingUrl) === resolveUrl(url));
-//       const li = document.createElement('div');
-//       li.className = 'ae-track'; li.draggable = true;
-//       li.dataset.idx = String(idx);
-//       li.dataset.path = rel;
-//       li.innerHTML = `
-//         <div class="grip">⋮⋮</div>
-//         <div class="title" title="${t.label}">${String(idx+1).padStart(2,'0')}. ${t.label}</div>
-//         <div class="ae-row-actions">
-//           <button class="play" type="button">${isPlaying ? 'PLAYING' : 'Play'}</button>
-//           <button class="rm" type="button">Remove</button>
-//         </div>
-//       `;
-//       tracksBox.appendChild(li);
-//     });
-//     bindDnD(); bindTrackRowActions();
-//   }
-
-//   function bindTrackRowActions(){
-//     qsa('.ae-track', tracksBox).forEach(li=>{
-//       const idx = Number(li.dataset.idx);
-//       const rel = String(li.dataset.path||'');
-//       const url = buildUrl(rel);
-//       const playBtn = li.querySelector('.play');
-//       const rmBtn   = li.querySelector('.rm');
-//       playBtn.addEventListener('click', async (e)=>{
-//         e.stopPropagation();
-//         await playUrl(url, { origin:'tracks', idx });
-//         refreshPlayingUI();
-//       }, { passive:false });
-//       rmBtn.addEventListener('click', ()=>{
-//         state.tracks.splice(idx,1);
-//         markDirty();
-//         renderTracks(state.tracks);
-//       }, { passive:true });
-//     });
-//   }
-
-//   function bindDnD(){
-//     let src=null;
-//     tracksBox.addEventListener('dragstart',e=>{
-//       const li = e.target.closest('.ae-track'); if(!li) return;
-//       src = Number(li.dataset.idx); e.dataTransfer.effectAllowed='move';
-//     });
-//     tracksBox.addEventListener('dragover',e=>{
-//       if(src==null) return; e.preventDefault(); e.dataTransfer.dropEffect='move';
-//     });
-//     tracksBox.addEventListener('drop',e=>{
-//       if(src==null) return; e.preventDefault();
-//       const li = e.target.closest('.ae-track'); if(!li) return;
-//       const dst = Number(li.dataset.idx);
-//       if (dst===src) { src=null; return; }
-//       const item = state.tracks.splice(src,1)[0];
-//       state.tracks.splice(dst,0,item);
-//       src=null; markDirty(); renderTracks(state.tracks);
-//     });
-//     tracksBox.addEventListener('dragend',()=>{ src=null; });
-//   }
-
-//   function openPicker(){ open(picker); search.value=''; renderResults(libState.items); search.focus(); }
-//   function closePicker(){ close(picker); }
-//   function isInTracks(rel){ return state.tracks.some(t => sanitizePath(t.path) === sanitizePath(rel)); }
-
-//   function renderResults(list){
-//     results.innerHTML = '';
-//     list.forEach((it)=>{
-//       const rel = sanitizePath(it.path);
-//       if (!rel || !hasMediaExt(rel)) return;
-//       const url = buildUrl(rel);
-//       const isDup = isInTracks(rel);
-//       const isPlaying = (state.playingUrl && resolveUrl(state.playingUrl) === resolveUrl(url));
-//       const li = document.createElement('li');
-//       li.dataset.path = rel;
-//       if (isPlaying) li.classList.add('is-playing');
-//       li.innerHTML = `
-//         <div class="title" title="${rel}">${it.label}</div>
-//         <div class="ae-row-actions">
-//           <button class="play" type="button">${isPlaying ? 'PLAYING' : 'Play'}</button>
-//           <button class="add" type="button" ${isDup ? 'disabled' : ''}>${isDup ? 'ADDED' : 'ADD'}</button>
-//         </div>
-//       `;
-//       const playBtn = li.querySelector('.play');
-//       const addBtn  = li.querySelector('.add');
-//       li.addEventListener('click', (e)=>{
-//         if (e.target === playBtn || e.target === addBtn) return;
-//         if (!isInTracks(rel)){
-//           state.tracks.push({ label: it.label, path: rel });
-//           markDirty();
-//           renderTracks(state.tracks);
-//           addBtn.disabled = true; addBtn.textContent = 'ADDED';
-//         }
-//       }, { passive:true });
-//       playBtn.addEventListener('click', async (e)=>{
-//         e.stopPropagation();
-//         await playUrl(url, { origin:'picker' });
-//         refreshPlayingUI();
-//       }, { passive:false });
-//       addBtn.addEventListener('click', (e)=>{
-//         e.stopPropagation();
-//         if (addBtn.disabled) return;
-//         state.tracks.push({ label: it.label, path: rel });
-//         markDirty();
-//         renderTracks(state.tracks);
-//         addBtn.disabled = true; addBtn.textContent = 'ADDED';
-//       }, { passive:true });
-//       results.appendChild(li);
-//     });
-//   }
-
-//   search.addEventListener('input', ()=>{
-//     const q = search.value.trim().toLowerCase();
-//     libState.filtered = !q ? libState.items :
-//       libState.items.filter(it => {
-//         const rel = sanitizePath(it.path);
-//         return rel && (it.label.toLowerCase().includes(q) || rel.toLowerCase().includes(q));
-//       });
-//     renderResults(libState.filtered);
-//   });
-//   pickClose.addEventListener('click', ()=> closePicker(), { passive:true });
-//   addTracksBtn.addEventListener('click', async ()=>{ await ensureLibrary(); openPicker(); }, { passive:true });
-
-//   infoToggle.addEventListener('click', ()=>{
-//     const expanded = infoToggle.getAttribute('aria-expanded') === 'true';
-//     infoToggle.setAttribute('aria-expanded', expanded ? 'false' : 'true');
-//     aeDesc.style.display = expanded ? 'none' : 'block';
-//     infoToggle.textContent = expanded ? 'Expand' : 'Collapse';
-//     markDirty();
-//   }, { passive:true });
-
-//   coverUrl.addEventListener('change', async ()=>{
-//     const src = coverUrl.value.trim();
-//     setCover(src, aeTitle.value || aeBand?.value);
-//     markDirty();
-//     const id = aeId.value; if (!id) return;
-//     try{
-//       await api(`/me/albums/${encodeURIComponent(id)}`, {
-//         method:'POST',
-//         headers:{ 'Content-Type': 'application/json' },
-//         body: JSON.stringify({ cover_url: src })
-//       });
-//       state.dirty = false;
-//     }catch{}
-//   }, { passive:true });
-
-//   coverFile.addEventListener('change', async ()=>{
-//     const f = coverFile.files && coverFile.files[0]; if(!f) return;
-//     const id = aeId.value; if(!id) return;
-//     const fd = new FormData(); fd.append('file', f);
-//     try{
-//       const d = await api(`/me/albums/${encodeURIComponent(id)}/cover`, { method:'POST', body: fd });
-//       setCover(d?.cover_url || '', aeTitle.value || aeBand?.value);
-//       coverUrl.value = d?.cover_url || '';
-//       state.dirty = false;
-//     }catch{}
-//   });
-
-//   form.addEventListener('submit', async (e)=>{
-//     e.preventDefault();
-//     const albumId = aeId.value;
-//     const cleanTracks = state.tracks
-//       .map(t => ({ label: t.label, path: sanitizePath(t.path) }))
-//       .filter(t => t.path && hasMediaExt(t.path));
-//     const body = {
-//       title: aeTitle.value.trim(),
-//       subtitle: (aeBand?.value || '').trim(),
-//       description_md: aeDesc.value,
-//       visibility: aeVis.value,
-//       cover_url: coverImg.src || coverUrl.value || '',
-//       metadata: { tracks: cleanTracks }
-//     };
-//     try{
-//       await api(`/me/albums/${encodeURIComponent(albumId)}`, {
-//         method:'POST',
-//         headers:{ 'Content-Type': 'application/json' },
-//         body: JSON.stringify(body)
-//       });
-//       state.dirty = false;
-//       close(editor);
-//       document.dispatchEvent(new CustomEvent('albums:refresh'));
-//     }catch(err){
-//       console.error('[AlbumEditor] save failed', err);
-//       alert('Save failed.');
-//     }
-//   }, { passive:false });
-
-//   async function loadAlbum(id){
-//     const { album } = await api(`/me/albums/${encodeURIComponent(id)}`, { method:'GET' });
-//     state.current = album;
-//     aeId.value = album.id;
-//     aeTitle.value = album.title || '';
-//     if (aeBand) aeBand.value = album.subtitle || '';
-//     aeDesc.value = album.description_md || '';
-//     aeVis.value = album.visibility || 'private';
-//     coverUrl.value = album.cover_url || '';
-//     setCover(album.cover_url || '', album.title || album.subtitle);
-
-//     const tr = (album.metadata && Array.isArray(album.metadata.tracks)) ? album.metadata.tracks : [];
-//     state.tracks = tr.map(t => {
-//       const rel = sanitizePath(t.path || '');
-//       const label = t.label || (rel.split('/').pop() || 'Track');
-//       return { label, path: rel };
-//     }).filter(x => x.path);
-//     state.dirty = false;
-//     renderTracks(state.tracks);
-//     refreshPlayingUI();
-//   }
-
-//   if (albumsRoot){
-//     albumsRoot.addEventListener('click', async (e)=>{
-//       const li = e.target.closest('.album-card');
-//       if (!li || li.classList.contains('create') || li.classList.contains('ghost')) return;
-//       const id = li.getAttribute('data-album-id');
-//       if (!id) return;
-//       await loadAlbum(id);
-//       open(editor);
-//     }, { passive:true });
-//   }
-
-//   document.addEventListener('albums:refresh', async ()=>{
-//     const tab = qs('.acct-tab[data-tab="albums"]');
-//     if (tab) tab.click();
-//   }, { passive:true });
-
-//   async function headOk(url){
-//     try{
-//       const r = await fetch(url, { method:'HEAD', cache:'no-store' });
-//       return r.ok;
-//     }catch{ return false; }
-//   }
-
-//   async function playUrl(url, ctx={}){
-//     const hookOk = (typeof loadPlaylistIndex === 'function') && Array.isArray(playlist);
-//     if (!hookOk){
-//       console.warn('[AlbumEditor] no compatible player hook found', { hasLoad: typeof loadPlaylistIndex, hasPlaylist: Array.isArray(playlist) });
-//       return;
-//     }
-//     const abs = resolveUrl(url);
-//     const ok = await headOk(abs);
-//     if (!ok) return;
-//     if (state.playingUrl && resolveUrl(state.playingUrl) === abs){ refreshPlayingUI(); return; }
-//     let idx = playlist.findIndex(p => resolveUrl(p.url) === abs);
-//     if (idx === -1){
-//       const label = decodeURIComponent(abs.split('/').pop() || 'Track');
-//       playlist.push({ type: mediaTypeFromExt(abs), label, url: abs });
-//       if (typeof refreshPlaylistSelect === 'function') refreshPlaylistSelect();
-//       idx = playlist.length - 1;
-//     }
-//     try{
-//       const okLoad = await loadPlaylistIndex(idx);
-//       if (okLoad === false) return;
-//       state.playingUrl = abs;
-//       refreshPlayingUI();
-//     }catch(err){
-//       console.error('[AlbumEditor] play failed', err);
-//     }
-//   }
-
-//   function refreshPlayingUI(){
-//     qsa('#aeResults li', editor).forEach(li=>{
-//       const rel = String(li.dataset.path||'');
-//       const url = buildUrl(rel);
-//       const on = state.playingUrl && resolveUrl(url) === resolveUrl(state.playingUrl);
-//       const playBtn = li.querySelector('.play');
-//       li.classList.toggle('is-playing', !!on);
-//       if (playBtn) playBtn.textContent = on ? 'PLAYING' : 'Play';
-//     });
-//     qsa('.ae-track', tracksBox).forEach(li=>{
-//       const rel = String(li.dataset.path||'');
-//       const url = buildUrl(rel);
-//       const on = state.playingUrl && resolveUrl(url) === resolveUrl(state.playingUrl);
-//       const btn = li.querySelector('.play');
-//       if (btn) btn.textContent = on ? 'PLAYING' : 'Play';
-//     });
-//   }
-// })();
 
 // Album Editor: picker + tracks + save/clone/delete + player interop (404/405-safe clone/delete)
 (() => {
-  const qs=(s,r=document)=>r.querySelector(s); const qsa=(s,r=document)=>Array.from(r.querySelectorAll(s));
-  const editor = qs('#albumEditor'); if(!editor) return;
+  // Query helpers
+  const qs=(s,r=document)=>r.querySelector(s);
+  const qsa=(s,r=document)=>Array.from(r.querySelectorAll(s));
 
+  // Editor root
+  const editor = qs('#albumEditor'); if (!editor) return;
+
+  // Base + logging
   const appDiv = qs('#app');
   const BASE = (appDiv?.dataset.base || 'media/archives').replace(/\/+$/,'');
   const LOG = (...a)=>console.log('[AlbumEditor]', ...a);
   const WARN = (...a)=>console.warn('[AlbumEditor]', ...a);
   const ERR = (...a)=>console.error('[AlbumEditor]', ...a);
 
-  // DOM
+  // DOM refs
   const form = qs('#albumEditorForm', editor);
   const closeBtn = qs('#albumEditorClose', editor);
   const coverImg = qs('#aeCoverImg', editor);
@@ -6091,32 +4400,66 @@ document.addEventListener('keydown', (e)=>{
   const search = qs('#aeSearch', editor);
   const results= qs('#aeResults', editor);
   const pickClose= qs('#aePickerClose', editor);
-
   const albumsRoot = qs('#acctAlbums');
 
-  // HTTP
+  // Albums grid stray cleanup (prevents duplicate bullet items rendered by a secondary template path)
+  function stripAlbumStrays(root){
+    if (!root) return;
+    root.querySelectorAll('li.acct-item').forEach(n => n.remove());
+    root.querySelectorAll('li:not(.album-card):not(.create)').forEach(n => n.remove());
+  }
+  stripAlbumStrays(albumsRoot);
+  if (albumsRoot){
+    const mo = new MutationObserver(() => stripAlbumStrays(albumsRoot));
+    mo.observe(albumsRoot, { childList:true });
+    document.addEventListener('albums:refresh', () => stripAlbumStrays(albumsRoot), { passive:true });
+  }
+
+  // Micro toast (centered, auto-dismiss)
+  function toast(msg, ms=1000){
+    let host = qs('#aeToastHost');
+    if (!host){
+      host = document.createElement('div');
+      host.id = 'aeToastHost';
+      document.body.appendChild(host);
+    }
+    const el = document.createElement('div');
+    el.className = 'ae-toast';
+    el.setAttribute('role','status');
+    el.textContent = msg;
+    host.appendChild(el);
+    // Force reflow to enable transition on attach
+    // eslint-disable-next-line no-unused-expressions
+    el.offsetWidth;
+    el.classList.add('is-shown');
+    const ttl = Math.max(600, ms);
+    setTimeout(()=>{ el.classList.remove('is-shown'); }, ttl);
+    setTimeout(()=>{ el.remove(); if (!host.children.length) host.remove(); }, ttl + 300);
+  }
+
+  // HTTP helper
   async function api(path, opts={}){
     const o = Object.assign({ credentials:'same-origin' }, opts);
     const res = await fetch(path, o);
     const ct = res.headers.get('content-type')||'';
-    const data = ct?.includes('application/json') ? await res.json().catch(()=>null) : null;
-    if(!res.ok) throw Object.assign(new Error('HTTP '+res.status), {status:res.status, data});
+    const data = ct.includes('application/json') ? await res.json().catch(()=>null) : null;
+    if (!res.ok) throw Object.assign(new Error('HTTP '+res.status), { status:res.status, data });
     return data;
   }
 
-  // DELETE helper with 405 fallback to POST /delete
+  // DELETE helper with 405 fallback
   async function deleteAlbum405Safe(id){
     const url = `/me/albums/${encodeURIComponent(id)}`;
-    const res1 = await fetch(url, { method:'DELETE', credentials:'same-origin' }).catch(()=>null);
-    if (res1 && res1.ok) return true;
-    if (res1 && res1.status !== 405) throw Object.assign(new Error('HTTP '+res1.status), { status: res1.status });
-    const res2 = await fetch(`${url}/delete`, { method:'POST', credentials:'same-origin' }).catch(()=>null);
-    if (res2 && res2.ok) return true;
-    if (res2) throw Object.assign(new Error('HTTP '+res2.status), { status: res2.status });
+    const r1 = await fetch(url, { method:'DELETE', credentials:'same-origin' }).catch(()=>null);
+    if (r1 && r1.ok) return true;
+    if (r1 && r1.status !== 405) throw Object.assign(new Error('HTTP '+r1.status), { status: r1.status });
+    const r2 = await fetch(`${url}/delete`, { method:'POST', credentials:'same-origin' }).catch(()=>null);
+    if (r2 && r2.ok) return true;
+    if (r2) throw Object.assign(new Error('HTTP '+r2.status), { status: r2.status });
     throw new Error('Network error');
   }
 
-  // Default cover (square data URI) to avoid empty src
+  // Default cover generator
   function genDefaultCover(title='Album'){
     const t = (title || 'Album').slice(0, 2).toUpperCase();
     const hue = Math.abs([...title].reduce((a,c)=>a+c.charCodeAt(0),0)) % 360;
@@ -6133,7 +4476,7 @@ document.addEventListener('keydown', (e)=>{
     return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
   }
 
-  // Utils
+  // General utils
   function open(el){ el.classList.remove('hidden'); }
   function close(el){ el.classList.add('hidden'); }
   function setCover(src, title){
@@ -6167,7 +4510,7 @@ document.addEventListener('keydown', (e)=>{
     return 'audio';
   }
 
-  // Library
+  // Library state
   const libState = { ready:false, items:[], filtered:[] };
   async function ensureLibrary(){
     if (libState.ready) return libState.items;
@@ -6186,9 +4529,84 @@ document.addEventListener('keydown', (e)=>{
     return libState.items;
   }
 
-  // State
+  // Editor state + history
   const state = { tracks: [], current: null, dirty: false, playingUrl: null };
+  const undoStack = [];
+  const redoStack = [];
   function markDirty(){ state.dirty = true; }
+  function pushUndo(entry){ undoStack.push(entry); redoStack.length = 0; updateUndoRedoUI(); }
+  function canUndo(){ return undoStack.length>0; }
+  function canRedo(){ return redoStack.length>0; }
+
+  // Undo/Redo core (add/remove only)
+  function doUndo(){
+    if (!canUndo()) return false;
+    const h = undoStack.pop();
+    switch(h.type){
+      case 'add': {
+        const idx = Math.min(h.index, state.tracks.length-1);
+        if (idx >= 0) {
+          const removed = state.tracks.splice(idx,1)[0];
+          markDirty(); renderTracks(state.tracks);
+          redoStack.push({ type:'add', index: idx, track: removed });
+          toast('Undo: Track Removed', 900);
+          updateUndoRedoUI();
+          return true;
+        }
+        break;
+      }
+      case 'remove': {
+        const at = Math.max(0, Math.min(h.index, state.tracks.length));
+        state.tracks.splice(at,0,{ label:h.track.label, path:h.track.path });
+        markDirty(); renderTracks(state.tracks);
+        redoStack.push({ type:'remove', index: at, track: h.track });
+        toast('Undo: Track Restored', 900);
+        updateUndoRedoUI();
+        return true;
+      }
+    }
+    updateUndoRedoUI();
+    return false;
+  }
+
+  function doRedo(){
+    if (!canRedo()) return false;
+    const h = redoStack.pop();
+    switch(h.type){
+      case 'add': {
+        const at = Math.max(0, Math.min(h.index, state.tracks.length));
+        state.tracks.splice(at,0,{ label:h.track.label, path:h.track.path });
+        markDirty(); renderTracks(state.tracks);
+        undoStack.push({ type:'add', index: at, track: h.track });
+        toast('Redo: Track Added', 900);
+        updateUndoRedoUI();
+        return true;
+      }
+      case 'remove': {
+        if (state.tracks[h.index] && state.tracks[h.index].path === h.track.path){
+          const removed = state.tracks.splice(h.index,1)[0];
+          markDirty(); renderTracks(state.tracks);
+          undoStack.push({ type:'remove', index: h.index, track: removed });
+          toast('Redo: Track Removed', 900);
+          updateUndoRedoUI();
+          return true;
+        } else {
+          const i = state.tracks.findIndex(t=>t.path===h.track.path);
+          if (i !== -1){
+            const removed = state.tracks.splice(i,1)[0];
+            markDirty(); renderTracks(state.tracks);
+            undoStack.push({ type:'remove', index: i, track: removed });
+            toast('Redo: Track Removed', 900);
+            updateUndoRedoUI();
+            return true;
+          }
+        }
+        break;
+      }
+    }
+    updateUndoRedoUI();
+    return false;
+  }
 
   // Dirty guard
   ['input','change','keyup','paste'].forEach(ev=>{
@@ -6205,43 +4623,48 @@ document.addEventListener('keydown', (e)=>{
   }
   closeBtn.addEventListener('click', requestClose, { passive:true });
   editor.addEventListener('click', (e)=>{ if (e.target===editor) requestClose(); }, { passive:true });
-  editor.addEventListener('keydown', (e)=>{ if (e.key==='Escape'){ e.stopPropagation(); requestClose(); } }, { passive:false });
 
- 
-
+  // Keyboard (works even if focus is inside inputs while editor is open)
+  document.addEventListener('keydown', (e)=>{
+    const editorOpen = !editor.classList.contains('hidden');
+    if (!editorOpen) return;
+    if (e.key==='Escape'){ e.stopPropagation(); requestClose(); return; }
+    const inTextField = ['INPUT','TEXTAREA'].includes(e.target.tagName) || e.target.isContentEditable;
+    const mod = e.metaKey || e.ctrlKey;
+    if (!mod) return;
+    // Allow undo/redo even inside text fields only when no selection changes value (we still perform preventDefault)
+    if (e.key.toLowerCase()==='z' && !e.shiftKey){ e.preventDefault(); doUndo(); }
+    else if ((e.key.toLowerCase()==='z' && e.shiftKey) || e.key.toLowerCase()==='y'){ e.preventDefault(); doRedo(); }
+  }, { passive:false });
 
   // Tracks render
-function renderTracks(list){
-  tracksBox.innerHTML = '';
-  list.forEach((t,idx)=>{
-    const rel = sanitizePath(t.path);
-    if (!rel) return;
-    const url = buildUrl(rel);
-    const isPlaying = (state.playingUrl && resolveUrl(state.playingUrl) === resolveUrl(url));
-    const li = document.createElement('div');
-    li.className = 'ae-track';
-    li.draggable = false;                 // native DnD off (we use SortableJS)
-    li.dataset.idx = String(idx);
-    li.dataset.path = rel;
-    li.innerHTML = `
-      <div class="grip" aria-label="Drag to reorder" title="Drag">⋮⋮</div>
-      <div class="title" title="${t.label}">${String(idx+1).padStart(2,'0')}. ${t.label}</div>
-      <div class="ae-row-actions">
-        <button class="play" type="button">${isPlaying ? 'PLAYING' : 'Play'}</button>
-        <button class="rm" type="button">Remove</button>
-      </div>
-    `;
-    tracksBox.appendChild(li);
-  });
-  bindDnD();
-  bindTrackRowActions();
-}
+  function renderTracks(list){
+    tracksBox.innerHTML = '';
+    list.forEach((t,idx)=>{
+      const rel = sanitizePath(t.path);
+      if (!rel) return;
+      const url = buildUrl(rel);
+      const isPlaying = (state.playingUrl && resolveUrl(state.playingUrl) === resolveUrl(url));
+      const li = document.createElement('div');
+      li.className = 'ae-track';
+      li.draggable = false; // SortableJS handles gestures
+      li.dataset.idx = String(idx);
+      li.dataset.path = rel;
+      li.innerHTML = `
+        <div class="grip" aria-label="Drag to reorder" title="Drag">⋮⋮</div>
+        <div class="title" title="${t.label}">${String(idx+1).padStart(2,'0')}. ${t.label}</div>
+        <div class="ae-row-actions">
+          <button class="play" type="button">${isPlaying ? 'PLAYING' : 'Play'}</button>
+          <button class="rm" type="button">Remove</button>
+        </div>
+      `;
+      tracksBox.appendChild(li);
+    });
+    bindDnD();
+    bindTrackRowActions();
+  }
 
-
-
-
-  
-
+  // Track row actions
   function bindTrackRowActions(){
     qsa('.ae-track', tracksBox).forEach(li=>{
       const idx = Number(li.dataset.idx);
@@ -6255,78 +4678,61 @@ function renderTracks(list){
         refreshPlayingUI();
       }, { passive:false });
       rmBtn.addEventListener('click', ()=>{
-        state.tracks.splice(idx,1);
+        const removed = state.tracks.splice(idx,1)[0];
+        pushUndo({ type:'remove', index: idx, track: { label: removed.label, path: removed.path } });
         markDirty();
         renderTracks(state.tracks);
+        toast('Track Removed — Undo available', 1200);
       }, { passive:true });
     });
   }
 
+  // SortableJS binding (swap, iOS-friendly; commits order strictly from DOM)
+  async function bindDnD(){
+    if (bindDnD._inited) return;
+    bindDnD._inited = true;
 
+    const SortableMod = await import('sortablejs'); // resolved via import map/vendor
+    const Sortable = SortableMod && (SortableMod.default || SortableMod);
+    if (!Sortable) { ERR('SortableJS failed to load'); return; }
 
-async function bindDnD(){
-  // Ensure one Sortable instance
-  if (bindDnD._inited) return;
-  bindDnD._inited = true;
-
-  // ESM bundle with plugins (includes Swap)
-  const SortableMod = await import('https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/modular/sortable.complete.esm.js');
-  const Sortable = SortableMod && (SortableMod.default || SortableMod);
-
-  if (!Sortable) { ERR('SortableJS failed to load'); return; }
-
-  Sortable.create(tracksBox, {
-    handle: '.grip',
-    draggable: '.ae-track',
-    animation: 150,
-    forceFallback: true,           // reliable on iOS
-    fallbackOnBody: true,
-    swap: true,                    // Swap plugin
-    swapClass: 'sortable-swap-highlight',
-    ghostClass: 'sortable-ghost',
-    chosenClass: 'sortable-chosen',
-
-    onChoose(evt){
-      LOG('drag choose', { idx: evt.oldIndex });
-    },
-    onUnchoose(evt){
-      LOG('drag unchoose', { idx: evt.oldIndex });
-    },
-    onEnd(evt){
-      // Rebuild order from DOM
-      const rows = qsa('.ae-track', tracksBox).map((li, i) => {
-        const rel = String(li.dataset.path || '');
-        const label = (li.querySelector('.title')?.textContent || '').replace(/^\s*\d+\.\s*/, '').trim();
-        // Renumber visible titles
-        const titleEl = li.querySelector('.title');
-        if (titleEl) titleEl.textContent = `${String(i+1).padStart(2,'0')}. ${label}`;
-        return { label, path: rel };
-      });
-
-      // Only commit when something actually changed
-      const changed = rows.length === state.tracks.length &&
-                      rows.some((r, i) => r.path !== state.tracks[i].path);
-      if (changed){
-        state.tracks = rows;
-        markDirty();
-        LOG('reordered', { from: evt.oldIndex, to: evt.newIndex, tracks: state.tracks });
-      } else {
-        LOG('no order change');
+    Sortable.create(tracksBox, {
+      handle: '.grip',
+      draggable: '.ae-track',
+      animation: 150,
+      forceFallback: true,
+      fallbackOnBody: true,
+      swap: true,
+      swapClass: 'sortable-swap-highlight',
+      ghostClass: 'sortable-ghost',
+      chosenClass: 'sortable-chosen',
+      onSort(){
+        qsa('.ae-track', tracksBox).forEach((li, i)=>{
+          const titleEl = li.querySelector('.title');
+          if (titleEl){
+            const raw = (titleEl.textContent||'').replace(/^\s*\d+\.\s*/,'').trim();
+            titleEl.textContent = `${String(i+1).padStart(2,'0')}. ${raw}`;
+          }
+        });
+      },
+      onEnd(){
+        const rows = qsa('.ae-track', tracksBox).map(li => {
+          const rel = String(li.dataset.path || '');
+          const label = (li.querySelector('.title')?.textContent || '').replace(/^\s*\d+\.\s*/, '').trim();
+          return { label, path: rel };
+        });
+        const before = state.tracks.map(t=>t.path).join('|');
+        const after  = rows.map(t=>t.path).join('|');
+        if (before !== after){
+          state.tracks = rows;
+          markDirty();
+          LOG('reordered', { tracks: state.tracks });
+        } else {
+          LOG('no order change');
+        }
       }
-    }
-  });
-}
-
-
-
-
-
-
-
-
-
-
-
+    });
+  }
 
   // Picker
   function openPicker(){ open(picker); search.value=''; renderResults(libState.items); search.focus(); }
@@ -6353,32 +4759,45 @@ async function bindDnD(){
       `;
       const playBtn = li.querySelector('.play');
       const addBtn  = li.querySelector('.add');
+
       li.addEventListener('click', (e)=>{
         if (e.target === playBtn || e.target === addBtn) return;
         if (!isInTracks(rel)){
-          state.tracks.push({ label: it.label, path: rel });
+          const track = { label: it.label, path: rel };
+          const at = state.tracks.length;
+          state.tracks.push(track);
+          pushUndo({ type:'add', index: at, track });
           markDirty();
           renderTracks(state.tracks);
           addBtn.disabled = true; addBtn.textContent = 'ADDED';
+          toast('Track Added', 900);
         }
       }, { passive:true });
+
       playBtn.addEventListener('click', async (e)=>{
         e.stopPropagation();
         await playUrl(url, { origin:'picker' });
         refreshPlayingUI();
       }, { passive:false });
+
       addBtn.addEventListener('click', (e)=>{
         e.stopPropagation();
         if (addBtn.disabled) return;
-        state.tracks.push({ label: it.label, path: rel });
+        const track = { label: it.label, path: rel };
+        const at = state.tracks.length;
+        state.tracks.push(track);
+        pushUndo({ type:'add', index: at, track });
         markDirty();
         renderTracks(state.tracks);
         addBtn.disabled = true; addBtn.textContent = 'ADDED';
+        toast('Track Added', 900);
       }, { passive:true });
+
       results.appendChild(li);
     });
   }
 
+  // Picker events
   search.addEventListener('input', ()=>{
     const q = search.value.trim().toLowerCase();
     libState.filtered = !q ? libState.items :
@@ -6400,7 +4819,7 @@ async function bindDnD(){
     markDirty();
   }, { passive:true });
 
-  // Cover URL
+  // Cover URL change
   coverUrl.addEventListener('change', async ()=>{
     const src = coverUrl.value.trim();
     setCover(src, aeTitle.value || aeBand?.value);
@@ -6451,6 +4870,8 @@ async function bindDnD(){
         body: JSON.stringify(body)
       });
       state.dirty = false;
+      undoStack.length = 0; redoStack.length = 0;
+      updateUndoRedoUI();
       close(editor);
       document.dispatchEvent(new CustomEvent('albums:refresh'));
     }catch(err){
@@ -6478,8 +4899,10 @@ async function bindDnD(){
       return { label, path: rel };
     }).filter(x => x.path);
     state.dirty = false;
+    undoStack.length = 0; redoStack.length = 0;
     renderTracks(state.tracks);
     refreshPlayingUI();
+    updateUndoRedoUI();
   }
 
   // Albums grid → open editor
@@ -6500,7 +4923,7 @@ async function bindDnD(){
     if (tab) tab.click();
   }, { passive:true });
 
-  // HEAD check for play URLs
+  // HEAD probe for play URLs
   async function headOk(url){
     try{
       const r = await fetch(url, { method:'HEAD', cache:'no-store' });
@@ -6508,7 +4931,7 @@ async function bindDnD(){
     }catch{ return false; }
   }
 
-  // Play via external hooks
+  // Player interop
   async function playUrl(url, ctx={}){
     const hookOk = (typeof loadPlaylistIndex === 'function') && Array.isArray(playlist);
     if (!hookOk){ WARN('no compatible player hook', { hasLoad: typeof loadPlaylistIndex, hasPlaylist: Array.isArray(playlist) }); return; }
@@ -6533,6 +4956,7 @@ async function bindDnD(){
     }
   }
 
+  // Update UI for currently playing track
   function refreshPlayingUI(){
     qsa('#aeResults li', editor).forEach(li=>{
       const rel = String(li.dataset.path||'');
@@ -6551,13 +4975,25 @@ async function bindDnD(){
     });
   }
 
-  // Clone + Delete controls injected into existing .ae-actions (no HTML changes)
+  // Management + Undo/Redo buttons
   function ensureMgmtButtons(){
     if (!actionsBar) return;
+    if (!qs('#aeUndo', actionsBar)){
+      const b = document.createElement('button');
+      b.id = 'aeUndo'; b.type = 'button'; b.textContent = 'Undo';
+      actionsBar.insertBefore(b, actionsBar.firstChild);
+      b.addEventListener('click', ()=>{ doUndo(); }, { passive:true });
+    }
+    if (!qs('#aeRedo', actionsBar)){
+      const b = document.createElement('button');
+      b.id = 'aeRedo'; b.type = 'button'; b.textContent = 'Redo';
+      actionsBar.insertBefore(b, actionsBar.firstChild.nextSibling);
+      b.addEventListener('click', ()=>{ doRedo(); }, { passive:true });
+    }
     if (!qs('#aeClone', actionsBar)){
       const b = document.createElement('button');
       b.id = 'aeClone'; b.type = 'button'; b.textContent = 'Clone';
-      actionsBar.insertBefore(b, actionsBar.firstChild);
+      actionsBar.appendChild(b);
       b.addEventListener('click', onClone, { passive:true });
     }
     if (!qs('#aeDelete', actionsBar)){
@@ -6566,10 +5002,17 @@ async function bindDnD(){
       actionsBar.appendChild(b);
       b.addEventListener('click', onDelete, { passive:true });
     }
+    updateUndoRedoUI();
+  }
+  function updateUndoRedoUI(){
+    const u = qs('#aeUndo', actionsBar);
+    const r = qs('#aeRedo', actionsBar);
+    if (u) u.disabled = !canUndo();
+    if (r) r.disabled = !canRedo();
   }
   ensureMgmtButtons();
 
-  // Clone: try POST /clone; on 404, fall back to manual clone via POST /me/albums
+  // Clone flow
   async function onClone(){
     const id = aeId.value; if (!id) return;
     const cloneUrl = `/me/albums/${encodeURIComponent(id)}/clone`;
@@ -6578,15 +5021,18 @@ async function bindDnD(){
       if (res.ok){
         const d = await res.json().catch(()=>null);
         const newId = d?.album?.id || d?.id;
-        if (newId){ await loadAlbum(newId); open(editor); document.dispatchEvent(new CustomEvent('albums:refresh')); }
+        if (newId){
+          await loadAlbum(newId);
+          open(editor);
+          document.dispatchEvent(new CustomEvent('albums:refresh'));
+          toast('Album Cloned', 1000);
+        }
         return;
       }
       if (res.status !== 404) throw Object.assign(new Error('HTTP '+res.status), { status: res.status });
     }catch(e){
       if (e?.status && e.status !== 404){ ERR('clone endpoint failed', e); alert('Clone failed.'); return; }
     }
-
-    // 404 fallback: manual clone
     try{
       const src = await api(`/me/albums/${encodeURIComponent(id)}`, { method:'GET' });
       const a = src?.album || src;
@@ -6609,13 +5055,14 @@ async function bindDnD(){
       await loadAlbum(newId);
       open(editor);
       document.dispatchEvent(new CustomEvent('albums:refresh'));
+      toast('Album Cloned', 1000);
     }catch(err){
       ERR('manual clone failed', err);
       alert('Clone failed.');
     }
   }
 
-  // Delete: two-step confirm → DELETE (405→POST /delete)
+  // Delete flow
   async function onDelete(){
     const id = aeId.value; if (!id) return;
     const name = (aeTitle.value || 'this album').trim();
@@ -6625,6 +5072,8 @@ async function bindDnD(){
     if ((guard || '').trim().toUpperCase() !== 'DELETE') return;
     try{
       state.dirty = false;
+      undoStack.length = 0; redoStack.length = 0;
+      updateUndoRedoUI();
       await deleteAlbum405Safe(id);
       close(editor);
       document.dispatchEvent(new CustomEvent('albums:refresh'));
@@ -6634,4 +5083,8 @@ async function bindDnD(){
     }
   }
 })();
+
+
+
+
 
